@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vehicle &amp; Parking Registry</title>
+  <base href="/run/vehicle-parking-registry/" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           var(--hub-bg, #f9fafb);
+      --card:         var(--hub-surface, #ffffff);
+      --border:       var(--hub-border, #e5e7eb);
+      --text:         var(--hub-text, #111827);
+      --muted:        var(--hub-text-muted, #6b7280);
+      --accent:       var(--hub-primary, #111827);
+      --accent-fg:    var(--hub-primary-fg, #ffffff);
+      --accent-hover: var(--hub-primary-hover, #374151);
+      --radius:       var(--hub-radius, 0.5rem);
+      --shadow:       0 1px 3px rgba(0,0,0,.07);
+    }
+
+    body {
+      font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; font-size: var(--hub-font-size, 15px); line-height: 1.5;
+    }
+    .app { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; padding: 14px 18px;
+      background: var(--accent); border-radius: var(--radius); color: white;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header .sub { font-size: 0.8rem; opacity: .75; margin-top: 1px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn-primary  { background: var(--accent); color: white; }
+    .btn-primary:hover:not(:disabled) { opacity: .88; }
+    .btn-ghost    { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+    .btn-danger   { background: #dc2626; color: white; }
+    .btn-danger:hover:not(:disabled) { opacity: .88; }
+    .btn-icon     { background: rgba(255,255,255,.2); color: white; border: none; font-size: 1.1rem; padding: 6px 10px; border-radius: 8px; cursor: pointer; line-height: 1; }
+    .btn-icon:hover { background: rgba(255,255,255,.3); }
+    .btn-sm       { padding: 5px 12px; font-size: 0.8rem; }
+    .btn-warning  { background: #f59e0b; color: white; }
+    .btn-warning:hover:not(:disabled) { opacity: .88; }
+    .btn-green    { background: #22c55e; color: white; }
+    .btn-green:hover:not(:disabled) { opacity: .88; }
+
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tab {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .tab.active { border-color: var(--accent); background: #f3f4f6; color: var(--accent); }
+
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filter-tab {
+      padding: 5px 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all .15s;
+    }
+    .filter-tab.active { border-color: var(--accent); background: #f3f4f6; color: var(--accent); }
+
+    .card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      box-shadow: var(--shadow); margin-bottom: 10px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card.flagged { border-left: 4px solid #ef4444; }
+
+    .c-top { display: flex; align-items: flex-start; gap: 10px; }
+    .c-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1.3; }
+    .c-body { flex: 1; min-width: 0; }
+    .c-title { font-weight: 700; font-size: 0.95rem; }
+    .c-meta  { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .c-footer { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 700; color: white; white-space: nowrap;
+    }
+    .badge-outline {
+      background: transparent !important; border: 1.5px solid var(--border);
+      color: var(--muted) !important;
+    }
+
+    .empty {
+      text-align: center; padding: 48px 24px; color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 1000; padding: 0;
+    }
+    @media (min-width: 540px) {
+      .modal-backdrop { align-items: center; padding: 16px; }
+    }
+    .modal {
+      background: var(--card); border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+      padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    }
+    @media (min-width: 540px) {
+      .modal { border-radius: var(--radius); }
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 8px 12px; border-radius: 8px;
+      border: 1.5px solid var(--border); font-size: 0.9rem;
+      background: var(--bg); color: var(--text);
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .section-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted); margin: 16px 0 8px;
+    }
+
+    .detail-field { margin-bottom: 12px; }
+    .detail-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 3px; }
+    .detail-value { font-size: 0.95rem; }
+
+    .link-btn {
+      background: none; border: none; padding: 0; color: var(--accent);
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: underline;
+    }
+
+    .flag-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .flag-row:last-child { border-bottom: none; }
+    .flag-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
+    .flag-reason { font-size: 0.88rem; }
+
+    .spot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .spot-tile {
+      background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 12px; cursor: pointer; transition: border-color .15s;
+    }
+    .spot-tile:hover { border-color: var(--accent); }
+    .spot-tile.occupied { border-left: 4px solid var(--accent); }
+    .spot-label { font-weight: 700; font-size: 0.95rem; }
+    .spot-meta { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="empty"><div class="empty-icon">⏳</div>Loading…</div>
+</div>
+
+<script type="module">
+import { esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate } from "/hub-sdk.js";
+import {
+  isBoard as _isBoard,
+  canEditVehicle as _canEditVehicle, canDeleteVehicle as _canDeleteVehicle,
+  canFlagVehicle as _canFlagVehicle, canResolveFlag as _canResolveFlag,
+  canManageSpots as _canManageSpots,
+  vehicleStatusLabel, vehicleStatusColor, flagStatusLabel, spotTypeLabel,
+  spotIsAvailable, buildViolationDescription,
+} from "./logic.js";
+
+const CONTEXT = window.__CONTEXT_URL    ?? "";
+const DB      = window.__DB_URL         ?? "";
+const APP_ID  = window.__APP_ID         ?? "vehicle-parking-registry";
+let ME        = window.__CURRENT_MEMBER ?? null;
+
+let members  = [];
+let groups   = [];
+let vehicles = [];
+let spots    = [];
+let settings = { board_group_id: null };
+let view     = "mine";   // "mine" | "registry" | "spots"
+let statusFilter = "all";
+let modalEl  = null;
+
+// ---- role helpers ----
+function isBoard(m)        { return _isBoard(m, groups, settings.board_group_id); }
+function canEditVehicle(v) { return _canEditVehicle(v, ME); }
+function canDeleteVehicle(v) { return _canDeleteVehicle(v, ME); }
+function canFlagVehicle()  { return _canFlagVehicle(ME, groups, settings.board_group_id); }
+function canResolveFlag(f) { return _canResolveFlag(f, ME, groups, settings.board_group_id); }
+function canManageSpots()  { return _canManageSpots(ME, groups, settings.board_group_id); }
+
+// ---- db ----
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+// ---- data loading ----
+async function loadContext() {
+  if (!CONTEXT) {
+    members = [
+      { id: "m1", name: "Alice Johnson", role: "adult", isAdmin: true },
+      { id: "m2", name: "Bob Smith",     role: "adult" },
+      { id: "m3", name: "Carol Davis",   role: "adult" },
+    ];
+    groups = [{ id: "g1", name: "HOA Board", memberIds: ["m1"] }];
+    ME = members[0];
+    return;
+  }
+  try {
+    const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+    const data = await res.json();
+    members = data["family.members"] ?? [];
+    groups  = data["family.groups"]  ?? [];
+  } catch { members = []; groups = []; }
+}
+
+async function loadSettings() {
+  const { rows } = await db(`SELECT key, value FROM settings WHERE key = 'board_group_id'`);
+  settings.board_group_id = rows[0]?.value || null;
+}
+
+async function loadVehicles() {
+  if (!DB) {
+    if (!vehicles.length) {
+      vehicles = [
+        { id: "v1", owner_id: "m2", make: "Honda", model: "Civic", color: "Blue", license_plate: "7ABC123", permit_number: "P-104", status: "active",  notes: "", created_at: "2026-05-01T10:00:00Z", updated_at: "2026-05-01T10:00:00Z" },
+        { id: "v2", owner_id: "m3", make: "Toyota", model: "RAV4", color: "Silver", license_plate: "8XYZ987", permit_number: "P-211", status: "flagged", notes: "", created_at: "2026-04-12T10:00:00Z", updated_at: "2026-05-20T10:00:00Z" },
+        { id: "v3", owner_id: "m2", make: "Ford",  model: "F-150", color: "Black", license_plate: "9LMN456", permit_number: "",      status: "active",  notes: "Visitor — staying through June", created_at: "2026-05-22T10:00:00Z", updated_at: "2026-05-22T10:00:00Z" },
+      ];
+    }
+    return;
+  }
+  const { rows } = await db(`SELECT * FROM vehicles ORDER BY created_at DESC`);
+  vehicles = rows;
+}
+
+async function loadSpots() {
+  if (!DB) {
+    if (!spots.length) {
+      spots = [
+        { id: "s1", label: "Lot A-12", spot_type: "assigned", assigned_unit_id: "m2", assigned_vehicle_id: "v1", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+        { id: "s2", label: "Lot A-13", spot_type: "assigned", assigned_unit_id: "m3", assigned_vehicle_id: "v2", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+        { id: "s3", label: "Visitor 1", spot_type: "visitor", assigned_unit_id: null, assigned_vehicle_id: null, notes: "2-hour limit", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+      ];
+    }
+    return;
+  }
+  const { rows } = await db(`SELECT * FROM parking_spots ORDER BY label ASC`);
+  spots = rows;
+}
+
+async function loadFlags(vehicleId) {
+  if (!DB) {
+    const demo = {
+      v2: [{ id: "f1", vehicle_id: "v2", flagged_by: "m1", reason: "Parked in fire lane for 3+ days.", violation_id: "demo-violation-1", status: "open", created_at: "2026-05-20T09:00:00Z", resolved_at: null }],
+    };
+    return demo[vehicleId] ?? [];
+  }
+  const { rows } = await db(`SELECT * FROM flags WHERE vehicle_id = ? ORDER BY created_at DESC`, [vehicleId]);
+  return rows;
+}
+
+// ---- activity / notifications ----
+async function logActivity(recordId, action, detail = "") {
+  const id = crypto.randomUUID();
+  await db(
+    `INSERT INTO activity (id, record_id, actor_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, recordId, ME?.id ?? "system", action, detail, new Date().toISOString()]
+  );
+}
+
+async function notify(title, body) {
+  await fetch("/api/notifications/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+  }).catch(() => {});
+}
+
+// ---- helpers ----
+function memberName(id) { return members.find(m => m.id === id)?.name ?? "Unknown"; }
+function fmt(iso) {
+  if (!iso) return "";
+  try { return formatRelativeDate(iso); } catch { return iso.slice(0, 10); }
+}
+function vehicleLabel(v) {
+  return [v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+}
+
+// ---- modal ----
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+function closeModal() { modalEl?.remove(); modalEl = null; }
+window.closeModal = closeModal;
+
+// ---- render ----
+function render() {
+  const boardView = isBoard(ME);
+  const tabs = [
+    { id: "mine", label: "My Vehicles" },
+    ...(boardView ? [{ id: "registry", label: "Registry" }] : []),
+    { id: "spots", label: "Parking Spots" },
+  ];
+  const tabsHtml = tabs.map(t =>
+    `<button class="tab ${view === t.id ? "active" : ""}" onclick="setView('${t.id}')">${esc(t.label)}</button>`
+  ).join("");
+
+  const addBtn = view === "mine"
+    ? `<button class="btn btn-icon" onclick="openVehicleModal()" title="Register Vehicle">＋</button>`
+    : view === "spots" && canManageSpots()
+      ? `<button class="btn btn-icon" onclick="openSpotModal()" title="Add Spot">＋</button>`
+      : "";
+
+  document.getElementById("app").innerHTML = `
+    <header>
+      <div>
+        <div style="font-size:1.2rem;font-weight:700">🚗 Vehicle &amp; Parking Registry</div>
+        <div class="sub">${boardView ? `${vehicles.length} vehicle${vehicles.length !== 1 ? "s" : ""} registered` : "Manage your household's vehicles and parking"}</div>
+      </div>
+      <div class="header-actions">${addBtn}</div>
+    </header>
+    <div class="tabs">${tabsHtml}</div>
+    <div id="view-body"></div>
+  `;
+
+  if (view === "mine") renderMyVehicles();
+  else if (view === "registry") renderRegistry();
+  else renderSpots();
+}
+
+window.setView = function(v) { view = v; statusFilter = "all"; render(); };
+
+// ---- My Vehicles ----
+function renderMyVehicles() {
+  const mine = vehicles.filter(v => v.owner_id === ME?.id);
+  const html = mine.length === 0
+    ? `<div class="empty"><div class="empty-icon">🚗</div>You haven't registered any vehicles yet.</div>`
+    : mine.map(vehicleCardHtml).join("");
+  document.getElementById("view-body").innerHTML = html;
+}
+
+function vehicleCardHtml(v) {
+  const color = vehicleStatusColor(v.status);
+  return `
+    <div class="card ${v.status === "flagged" ? "flagged" : ""}" onclick="openVehicleDetail('${esc(v.id)}')">
+      <div class="c-top">
+        <div class="c-icon">🚗</div>
+        <div class="c-body">
+          <div class="c-title">${esc(vehicleLabel(v))} · ${esc(v.license_plate || "No plate on file")}</div>
+          <div class="c-meta">${esc(v.color || "")}${v.permit_number ? ` · Permit ${esc(v.permit_number)}` : ""}</div>
+        </div>
+      </div>
+      <div class="c-footer">
+        <span class="badge" style="background:${color}">${vehicleStatusLabel(v.status)}</span>
+        <span class="badge badge-outline">${esc(memberName(v.owner_id))}</span>
+      </div>
+    </div>`;
+}
+
+// ---- Registry (board) ----
+function renderRegistry() {
+  const tabs = ["all", "active", "flagged", "expired"];
+  const tabsHtml = tabs.map(t =>
+    `<button class="filter-tab ${statusFilter === t ? "active" : ""}" onclick="setStatusFilter('${t}')">
+      ${t === "all" ? "All" : vehicleStatusLabel(t)}
+    </button>`
+  ).join("");
+
+  let list = vehicles;
+  if (statusFilter !== "all") list = list.filter(v => v.status === statusFilter);
+
+  const cardsHtml = list.length === 0
+    ? `<div class="empty"><div class="empty-icon">✅</div>No vehicles found.</div>`
+    : list.map(vehicleCardHtml).join("");
+
+  document.getElementById("view-body").innerHTML = `
+    <div class="filters">${tabsHtml}</div>
+    ${cardsHtml}
+  `;
+}
+window.setStatusFilter = function(t) { statusFilter = t; renderRegistry(); };
+
+// ---- Vehicle modal (register / edit) ----
+window.openVehicleModal = function(existingId) {
+  const v = existingId ? vehicles.find(x => x.id === existingId) : null;
+  openModal(`
+    <div class="modal-title">${v ? "Edit Vehicle" : "Register Vehicle"}</div>
+    <div class="form-group"><label>Make</label><input id="f-make" value="${esc(v?.make ?? "")}" placeholder="Honda"></div>
+    <div class="form-group"><label>Model</label><input id="f-model" value="${esc(v?.model ?? "")}" placeholder="Civic"></div>
+    <div class="form-group"><label>Color</label><input id="f-color" value="${esc(v?.color ?? "")}" placeholder="Blue"></div>
+    <div class="form-group"><label>License Plate</label><input id="f-plate" value="${esc(v?.license_plate ?? "")}" placeholder="7ABC123"></div>
+    <div class="form-group"><label>Permit Number (optional)</label><input id="f-permit" value="${esc(v?.permit_number ?? "")}" placeholder="P-104"></div>
+    <div class="form-group"><label>Notes (optional)</label><textarea id="f-notes" placeholder="e.g. visiting through June">${esc(v?.notes ?? "")}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitVehicle('${v?.id ?? ""}')">${v ? "Save" : "Register"}</button>
+    </div>
+  `);
+};
+
+window.submitVehicle = async function(existingId) {
+  const make    = document.getElementById("f-make")?.value?.trim();
+  const model   = document.getElementById("f-model")?.value?.trim();
+  const color   = document.getElementById("f-color")?.value?.trim();
+  const plate   = document.getElementById("f-plate")?.value?.trim();
+  const permit  = document.getElementById("f-permit")?.value?.trim();
+  const notes   = document.getElementById("f-notes")?.value?.trim();
+
+  if (!make)  { document.getElementById("f-make").focus(); return; }
+  if (!model) { document.getElementById("f-model").focus(); return; }
+  if (!plate) { document.getElementById("f-plate").focus(); return; }
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = existingId ? "Saving…" : "Registering…"; }
+
+  try {
+    const now = new Date().toISOString();
+    if (existingId) {
+      const idx = vehicles.findIndex(x => x.id === existingId);
+      if (idx !== -1) vehicles[idx] = { ...vehicles[idx], make, model, color, license_plate: plate, permit_number: permit, notes, updated_at: now };
+      closeModal();
+      render();
+      await db(
+        `UPDATE vehicles SET make = ?, model = ?, color = ?, license_plate = ?, permit_number = ?, notes = ?, updated_at = ? WHERE id = ?`,
+        [make, model, color, plate, permit, notes, now, existingId]
+      );
+      logActivity(existingId, "updated", `${ME?.name ?? "Someone"} updated ${vehicleLabel({ make, model })}`).catch(() => {});
+    } else {
+      const id = crypto.randomUUID();
+      vehicles.unshift({ id, owner_id: ME?.id ?? "system", make, model, color, license_plate: plate, permit_number: permit, status: "active", notes, created_at: now, updated_at: now });
+      closeModal();
+      render();
+      if (DB) {
+        await db(
+          `INSERT INTO vehicles (id, owner_id, make, model, color, license_plate, permit_number, status, notes, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
+          [id, ME?.id ?? "system", make, model, color, plate, permit, notes, now, now]
+        ).catch(() => { vehicles = vehicles.filter(x => x.id !== id); render(); });
+      }
+      Promise.all([
+        logActivity(id, "registered", `${ME?.name ?? "Someone"} registered ${vehicleLabel({ make, model })} (${plate})`),
+        notify("Vehicle Registered", `${ME?.name ?? "A member"} registered a ${make} ${model}.`),
+      ]).catch(() => {});
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Register"; }
+    throw e;
+  }
+};
+
+window.deleteVehicle = async function(id) {
+  const ok = await hubConfirm({ message: "Remove this vehicle from the registry?", destructive: true, confirmLabel: "Remove" });
+  if (!ok) return;
+  vehicles = vehicles.filter(x => x.id !== id);
+  closeModal();
+  render();
+  await db(`DELETE FROM vehicles WHERE id = ?`, [id]).catch(() => {});
+};
+
+// ---- Vehicle detail (with flags + flag action) ----
+window.openVehicleDetail = async function(id) {
+  const v = vehicles.find(x => x.id === id);
+  if (!v) return;
+  const flags = await loadFlags(id);
+  renderVehicleDetail(v, flags);
+};
+
+function renderVehicleDetail(v, flags) {
+  const color = vehicleStatusColor(v.status);
+
+  const flagsHtml = flags.length === 0
+    ? `<div style="color:var(--muted);font-size:0.85rem">No flags on record.</div>`
+    : flags.map(f => `
+        <div class="flag-row">
+          <div class="flag-meta">
+            ${esc(memberName(f.flagged_by))} · ${fmt(f.created_at)} ·
+            <span class="badge ${f.status === "open" ? "" : "badge-outline"}" style="${f.status === "open" ? "background:#ef4444" : ""}">${flagStatusLabel(f.status)}</span>
+          </div>
+          <div class="flag-reason">${esc(f.reason)}</div>
+          ${f.violation_id ? `<button class="link-btn" style="margin-top:4px" onclick="hubOpenViolation('${esc(f.violation_id)}')">View in Violation Tracking →</button>` : ""}
+          ${canResolveFlag(f) ? `<div style="margin-top:6px"><button class="btn btn-sm btn-green" onclick="submitResolveFlag('${esc(v.id)}','${esc(f.id)}')">Mark Resolved</button></div>` : ""}
+        </div>`).join("");
+
+  const ownerActions = canEditVehicle(v) ? `
+    <div class="modal-actions" style="justify-content:flex-start;margin-top:8px">
+      <button class="btn btn-sm btn-ghost" onclick="openVehicleModal('${esc(v.id)}')">Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteVehicle('${esc(v.id)}')">Remove</button>
+    </div>` : "";
+
+  const flagAction = canFlagVehicle() ? `
+    <div class="section-title">Leadership Actions</div>
+    <button class="btn btn-sm btn-warning" onclick="openFlagModal('${esc(v.id)}')">🚩 Flag Vehicle</button>` : "";
+
+  openModal(`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <span style="font-size:1.8rem">🚗</span>
+      <div>
+        <div class="modal-title" style="margin-bottom:4px">${esc(vehicleLabel(v))}</div>
+        <span class="badge" style="background:${color}">${vehicleStatusLabel(v.status)}</span>
+      </div>
+    </div>
+    <div class="detail-field"><div class="detail-label">Owner</div><div class="detail-value">${esc(memberName(v.owner_id))}</div></div>
+    <div class="detail-field"><div class="detail-label">License Plate</div><div class="detail-value">${esc(v.license_plate || "—")}</div></div>
+    <div class="detail-field"><div class="detail-label">Color</div><div class="detail-value">${esc(v.color || "—")}</div></div>
+    ${v.permit_number ? `<div class="detail-field"><div class="detail-label">Permit Number</div><div class="detail-value">${esc(v.permit_number)}</div></div>` : ""}
+    ${v.notes ? `<div class="detail-field"><div class="detail-label">Notes</div><div class="detail-value">${esc(v.notes)}</div></div>` : ""}
+    ${ownerActions}
+    <div class="section-title">Flags</div>
+    ${flagsHtml}
+    ${flagAction}
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  `);
+}
+
+window.hubOpenViolation = function(violationId) {
+  hubOpen("violation-tracking", { violationId });
+};
+
+// ---- Flag modal ----
+window.openFlagModal = function(vehicleId) {
+  const v = vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  openModal(`
+    <div class="modal-title">Flag Vehicle — ${esc(vehicleLabel(v))}</div>
+    <div class="form-group">
+      <label>Reason</label>
+      <textarea id="f-reason" placeholder="Describe the issue (e.g. expired permit, parked in fire lane)…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Cure Deadline</label>
+      <input type="date" id="f-deadline" />
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">Used to open a matching entry in Violation Tracking.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-warning" onclick="submitFlag('${esc(vehicleId)}')">Flag &amp; Issue Violation</button>
+    </div>
+  `);
+};
+
+window.submitFlag = async function(vehicleId) {
+  const reason   = document.getElementById("f-reason")?.value?.trim();
+  const deadline = document.getElementById("f-deadline")?.value;
+  if (!reason)   { document.getElementById("f-reason").focus(); return; }
+  if (!deadline) { document.getElementById("f-deadline").focus(); return; }
+
+  const v = vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-warning");
+  if (btn) { btn.disabled = true; btn.textContent = "Flagging…"; }
+
+  try {
+    const now = new Date().toISOString();
+    const flagId = crypto.randomUUID();
+    const violationId = crypto.randomUUID(); // generated here so both apps reference the same id
+
+    // Optimistic: mark vehicle flagged, close modal, render immediately
+    const idx = vehicles.findIndex(x => x.id === vehicleId);
+    if (idx !== -1) vehicles[idx] = { ...vehicles[idx], status: "flagged", updated_at: now };
+    closeModal();
+    render();
+
+    await db(
+      `INSERT INTO flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'open', ?)`,
+      [flagId, vehicleId, ME?.id ?? "system", reason, violationId, now]
+    );
+    await db(`UPDATE vehicles SET status = 'flagged', updated_at = ? WHERE id = ?`, [now, vehicleId]);
+
+    // Cross-post to Violation Tracking's inbox — it drains this on its next load
+    crossWrite("violation-tracking", "pending_violations", [{
+      op: "array_append", path: "items",
+      value: {
+        id: violationId,
+        unit_id: v.owner_id,
+        issued_by: ME?.id ?? "system",
+        category: "parking",
+        description: buildViolationDescription(v, reason),
+        cure_deadline: deadline,
+      },
+    }]).catch(() => {});
+
+    Promise.all([
+      logActivity(vehicleId, "flagged", `${ME?.name ?? "Leadership"} flagged ${vehicleLabel(v)}: ${reason}`),
+      notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`),
+    ]).catch(() => {});
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Flag & Issue Violation"; }
+    throw e;
+  }
+};
+
+window.submitResolveFlag = async function(vehicleId, flagId) {
+  const btn = modalEl?.querySelector(`button[onclick="submitResolveFlag('${vehicleId}','${flagId}')"]`);
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    const now = new Date().toISOString();
+    await db(`UPDATE flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
+
+    const remaining = (await loadFlags(vehicleId)).filter(f => f.id !== flagId && f.status === "open");
+    if (remaining.length === 0) {
+      const idx = vehicles.findIndex(x => x.id === vehicleId);
+      if (idx !== -1) vehicles[idx] = { ...vehicles[idx], status: "active", updated_at: now };
+      await db(`UPDATE vehicles SET status = 'active', updated_at = ? WHERE id = ?`, [now, vehicleId]);
+    }
+
+    logActivity(vehicleId, "flag_resolved", `${ME?.name ?? "Leadership"} resolved a flag`).catch(() => {});
+    openVehicleDetail(vehicleId);
+    render();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Mark Resolved"; }
+    throw e;
+  }
+};
+
+// ---- Parking Spots ----
+function renderSpots() {
+  const html = spots.length === 0
+    ? `<div class="empty"><div class="empty-icon">🅿️</div>No parking spots have been added yet.</div>`
+    : `<div class="spot-grid">${spots.map(spotTileHtml).join("")}</div>`;
+  document.getElementById("view-body").innerHTML = html;
+}
+
+function spotTileHtml(s) {
+  const occupied = !spotIsAvailable(s);
+  const vehicle = occupied ? vehicles.find(v => v.id === s.assigned_vehicle_id) : null;
+  return `
+    <div class="spot-tile ${occupied ? "occupied" : ""}" onclick="openSpotDetail('${esc(s.id)}')">
+      <div class="spot-label">${esc(s.label)}</div>
+      <div class="spot-meta">${spotTypeLabel(s.spot_type)}</div>
+      <div class="spot-meta">${occupied ? esc(`${vehicleLabel(vehicle ?? {})} · ${memberName(s.assigned_unit_id)}`) : "Unassigned"}</div>
+    </div>`;
+}
+
+window.openSpotDetail = function(id) {
+  const s = spots.find(x => x.id === id);
+  if (!s) return;
+  const vehicle = s.assigned_vehicle_id ? vehicles.find(v => v.id === s.assigned_vehicle_id) : null;
+
+  const manage = canManageSpots() ? `
+    <div class="modal-actions" style="justify-content:flex-start">
+      <button class="btn btn-sm btn-ghost" onclick="openSpotModal('${esc(s.id)}')">Edit / Reassign</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSpot('${esc(s.id)}')">Remove</button>
+    </div>` : "";
+
+  openModal(`
+    <div class="modal-title">🅿️ ${esc(s.label)}</div>
+    <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${spotTypeLabel(s.spot_type)}</div></div>
+    <div class="detail-field"><div class="detail-label">Assigned To</div><div class="detail-value">${s.assigned_unit_id ? esc(memberName(s.assigned_unit_id)) : "—"}</div></div>
+    <div class="detail-field"><div class="detail-label">Vehicle</div><div class="detail-value">${vehicle ? esc(`${vehicleLabel(vehicle)} (${vehicle.license_plate})`) : "—"}</div></div>
+    ${s.notes ? `<div class="detail-field"><div class="detail-label">Notes</div><div class="detail-value">${esc(s.notes)}</div></div>` : ""}
+    ${manage}
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
+  `);
+};
+
+window.openSpotModal = function(existingId) {
+  const s = existingId ? spots.find(x => x.id === existingId) : null;
+  const unitOpts = members.filter(m => !isBoard(m)).map(m =>
+    `<option value="${esc(m.id)}" ${s?.assigned_unit_id === m.id ? "selected" : ""}>${esc(m.name)}</option>`
+  ).join("");
+  const vehicleOpts = vehicles.map(v =>
+    `<option value="${esc(v.id)}" ${s?.assigned_vehicle_id === v.id ? "selected" : ""}>${esc(vehicleLabel(v))} (${esc(v.license_plate)}) — ${esc(memberName(v.owner_id))}</option>`
+  ).join("");
+
+  openModal(`
+    <div class="modal-title">${s ? "Edit Spot" : "Add Parking Spot"}</div>
+    <div class="form-group"><label>Label</label><input id="f-label" value="${esc(s?.label ?? "")}" placeholder="Lot A-12"></div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="f-type">
+        <option value="assigned"   ${s?.spot_type === "assigned" ? "selected" : ""}>Assigned</option>
+        <option value="visitor"    ${s?.spot_type === "visitor" ? "selected" : ""}>Visitor</option>
+        <option value="unassigned" ${!s || s?.spot_type === "unassigned" ? "selected" : ""}>Unassigned</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Assigned Unit (optional)</label>
+      <select id="f-unit"><option value="">—</option>${unitOpts}</select>
+    </div>
+    <div class="form-group">
+      <label>Assigned Vehicle (optional)</label>
+      <select id="f-vehicle"><option value="">—</option>${vehicleOpts}</select>
+    </div>
+    <div class="form-group"><label>Notes (optional)</label><textarea id="f-notes">${esc(s?.notes ?? "")}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSpot('${s?.id ?? ""}')">${s ? "Save" : "Add Spot"}</button>
+    </div>
+  `);
+};
+
+window.submitSpot = async function(existingId) {
+  const label   = document.getElementById("f-label")?.value?.trim();
+  const type    = document.getElementById("f-type")?.value;
+  const unitId  = document.getElementById("f-unit")?.value || null;
+  const vehicleId = document.getElementById("f-vehicle")?.value || null;
+  const notes   = document.getElementById("f-notes")?.value?.trim();
+
+  if (!label) { document.getElementById("f-label").focus(); return; }
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+
+  try {
+    const now = new Date().toISOString();
+    if (existingId) {
+      const idx = spots.findIndex(x => x.id === existingId);
+      if (idx !== -1) spots[idx] = { ...spots[idx], label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, updated_at: now };
+      closeModal();
+      render();
+      await db(
+        `UPDATE parking_spots SET label = ?, spot_type = ?, assigned_unit_id = ?, assigned_vehicle_id = ?, notes = ?, updated_at = ? WHERE id = ?`,
+        [label, type, unitId, vehicleId, notes, now, existingId]
+      );
+    } else {
+      const id = crypto.randomUUID();
+      spots.push({ id, label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, created_at: now, updated_at: now });
+      spots.sort((a, b) => a.label.localeCompare(b.label));
+      closeModal();
+      render();
+      await db(
+        `INSERT INTO parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, label, type, unitId, vehicleId, notes, now, now]
+      ).catch(() => { spots = spots.filter(x => x.id !== id); render(); });
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Add Spot"; }
+    throw e;
+  }
+};
+
+window.deleteSpot = async function(id) {
+  const ok = await hubConfirm({ message: "Remove this parking spot?", destructive: true, confirmLabel: "Remove" });
+  if (!ok) return;
+  spots = spots.filter(x => x.id !== id);
+  closeModal();
+  render();
+  await db(`DELETE FROM parking_spots WHERE id = ?`, [id]).catch(() => {});
+};
+
+// ---- deep link ----
+function handleDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const vehicleId = params.get("vehicleId");
+  const spotId = params.get("spotId");
+  if (vehicleId) openVehicleDetail(vehicleId);
+  else if (spotId) openSpotDetail(spotId);
+}
+
+// ---- init ----
+(async () => {
+  await Promise.all([loadContext(), loadSettings()]);
+  await Promise.all([loadVehicles(), loadSpots()]);
+  render();
+  handleDeepLink();
+})();
+</script>
+</body>
+</html>

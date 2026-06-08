@@ -1,0 +1,24 @@
+{
+  "id": "vehicle-parking-registry",
+  "name": "Vehicle & Parking Registry",
+  "version": "1.0.0",
+  "description": "Register household vehicles and parking spots/permits; leadership manages assignments and flags non-compliant vehicles.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "organization",
+  "tags": ["hoa", "vehicles", "parking", "permits", "compliance", "board"],
+  "data_access": {
+    "reads": ["family.members", "family.groups"],
+    "writes": ["app.violation-tracking.pending_violations"]
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": true
+  },
+  "storage": "db",
+  "resource_limits": {
+    "max_db_bytes": 52428800
+  },
+  "nav": { "label": "Parking" },
+  "icon": "🚗"
+}
