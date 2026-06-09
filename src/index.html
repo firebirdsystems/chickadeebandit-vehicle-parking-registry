@@ -197,6 +197,8 @@ let view     = "mine";   // "mine" | "registry" | "spots"
 let statusFilter = "all";
 let modalEl  = null;
 
+let memberMap = new Map();
+
 // ---- role helpers ----
 function isBoard(m)        { return _isBoard(m, groups, settings.board_group_id); }
 function canEditVehicle(v) { return _canEditVehicle(v, ME); }
@@ -226,6 +228,7 @@ async function loadContext() {
     ];
     groups = [{ id: "g1", name: "HOA Board", memberIds: ["m1"] }];
     ME = members[0];
+    memberMap = new Map(members.map(m => [m.id, m]));
     return;
   }
   try {
@@ -234,6 +237,7 @@ async function loadContext() {
     members = data["family.members"] ?? [];
     groups  = data["family.groups"]  ?? [];
   } catch { members = []; groups = []; }
+  memberMap = new Map(members.map(m => [m.id, m]));
 }
 
 async function loadSettings() {
@@ -300,7 +304,7 @@ async function notify(title, body) {
 }
 
 // ---- helpers ----
-function memberName(id) { return members.find(m => m.id === id)?.name ?? "Unknown"; }
+function memberName(id) { return memberMap.get(id)?.name ?? "Unknown"; }
 function fmt(iso) {
   if (!iso) return "";
   try { return formatRelativeDate(iso); } catch { return iso.slice(0, 10); }
