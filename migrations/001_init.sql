@@ -1,12 +1,10 @@
-CREATE TABLE IF NOT EXISTS settings (
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__settings (
   key          TEXT NOT NULL,
   value        TEXT NOT NULL DEFAULT '',
-  PRIMARY KEY (household_id, key)
+  PRIMARY KEY (key)
 );
 
-CREATE TABLE IF NOT EXISTS vehicles (
-  household_id   UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__vehicles (
   id             TEXT NOT NULL,
   owner_id       TEXT NOT NULL,
   make           TEXT NOT NULL DEFAULT '',
@@ -18,11 +16,10 @@ CREATE TABLE IF NOT EXISTS vehicles (
   notes          TEXT NOT NULL DEFAULT '',
   created_at     TEXT NOT NULL,
   updated_at     TEXT NOT NULL,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS parking_spots (
-  household_id        UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__parking_spots (
   id                  TEXT NOT NULL,
   label               TEXT NOT NULL,
   spot_type           TEXT NOT NULL DEFAULT 'unassigned',
@@ -31,11 +28,10 @@ CREATE TABLE IF NOT EXISTS parking_spots (
   notes               TEXT NOT NULL DEFAULT '',
   created_at          TEXT NOT NULL,
   updated_at          TEXT NOT NULL,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS flags (
-  household_id  UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__flags (
   id            TEXT NOT NULL,
   vehicle_id    TEXT NOT NULL,
   flagged_by    TEXT NOT NULL,
@@ -44,34 +40,33 @@ CREATE TABLE IF NOT EXISTS flags (
   status        TEXT NOT NULL DEFAULT 'open',
   created_at    TEXT NOT NULL,
   resolved_at   TEXT,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS activity (
-  household_id  UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
+CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__activity (
   id            TEXT NOT NULL,
   record_id     TEXT NOT NULL,
   actor_id      TEXT NOT NULL,
   action        TEXT NOT NULL,
   detail        TEXT NOT NULL DEFAULT '',
   created_at    TEXT NOT NULL,
-  PRIMARY KEY (household_id, id)
+  PRIMARY KEY (id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_vpr_vehicles_owner
-  ON vehicles (household_id, owner_id);
+  ON app_vehicle_parking_registry__vehicles (owner_id);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_vehicles_status
-  ON vehicles (household_id, status);
+  ON app_vehicle_parking_registry__vehicles (status);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_spots_assigned_vehicle
-  ON parking_spots (household_id, assigned_vehicle_id);
+  ON app_vehicle_parking_registry__parking_spots (assigned_vehicle_id);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_flags_vehicle
-  ON flags (household_id, vehicle_id);
+  ON app_vehicle_parking_registry__flags (vehicle_id);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_flags_status
-  ON flags (household_id, status);
+  ON app_vehicle_parking_registry__flags (status);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_activity_record
-  ON activity (household_id, record_id);
+  ON app_vehicle_parking_registry__activity (record_id);

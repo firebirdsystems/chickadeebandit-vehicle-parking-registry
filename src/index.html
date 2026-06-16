@@ -192,7 +192,7 @@ let members  = [];
 let groups   = [];
 let vehicles = [];
 let spots    = [];
-let settings = { board_group_id: null };
+let appSettings = { board_group_id: null };
 let view     = "mine";   // "mine" | "registry" | "spots"
 let statusFilter = "all";
 let modalEl  = null;
@@ -200,12 +200,12 @@ let modalEl  = null;
 let memberMap = new Map();
 
 // ---- role helpers ----
-function isBoard(m)        { return _isBoard(m, groups, settings.board_group_id); }
+function isBoard(m)        { return _isBoard(m, groups, appSettings.board_group_id); }
 function canEditVehicle(v) { return _canEditVehicle(v, ME); }
 function canDeleteVehicle(v) { return _canDeleteVehicle(v, ME); }
-function canFlagVehicle()  { return _canFlagVehicle(ME, groups, settings.board_group_id); }
-function canResolveFlag(f) { return _canResolveFlag(f, ME, groups, settings.board_group_id); }
-function canManageSpots()  { return _canManageSpots(ME, groups, settings.board_group_id); }
+function canFlagVehicle()  { return _canFlagVehicle(ME, groups, appSettings.board_group_id); }
+function canResolveFlag(f) { return _canResolveFlag(f, ME, groups, appSettings.board_group_id); }
+function canManageSpots()  { return _canManageSpots(ME, groups, appSettings.board_group_id); }
 
 // ---- db ----
 async function db(sql, params = []) {
@@ -241,8 +241,8 @@ async function loadContext() {
 }
 
 async function loadSettings() {
-  const { rows } = await db(`SELECT key, value FROM settings WHERE key = 'board_group_id'`);
-  settings.board_group_id = rows[0]?.value || null;
+  const { rows } = await db(`SELECT key, value FROM app_vehicle_parking_registry__settings WHERE key = 'board_group_id'`);
+  appSettings.board_group_id = rows[0]?.value || null;
 }
 
 async function loadVehicles() {
@@ -256,7 +256,7 @@ async function loadVehicles() {
     }
     return;
   }
-  const { rows } = await db(`SELECT * FROM vehicles ORDER BY created_at DESC`);
+  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__vehicles ORDER BY created_at DESC`);
   vehicles = rows;
 }
 
@@ -271,7 +271,7 @@ async function loadSpots() {
     }
     return;
   }
-  const { rows } = await db(`SELECT * FROM parking_spots ORDER BY label ASC`);
+  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__parking_spots ORDER BY label ASC`);
   spots = rows;
 }
 
@@ -282,7 +282,7 @@ async function loadFlags(vehicleId) {
     };
     return demo[vehicleId] ?? [];
   }
-  const { rows } = await db(`SELECT * FROM flags WHERE vehicle_id = ? ORDER BY created_at DESC`, [vehicleId]);
+  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__flags WHERE vehicle_id = ? ORDER BY created_at DESC`, [vehicleId]);
   return rows;
 }
 
@@ -290,7 +290,7 @@ async function loadFlags(vehicleId) {
 async function logActivity(recordId, action, detail = "") {
   const id = crypto.randomUUID();
   await db(
-    `INSERT INTO activity (id, record_id, actor_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO app_vehicle_parking_registry__activity (id, record_id, actor_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     [id, recordId, ME?.id ?? "system", action, detail, new Date().toISOString()]
   );
 }
@@ -453,7 +453,7 @@ window.submitVehicle = async function(existingId) {
       closeModal();
       render();
       await db(
-        `UPDATE vehicles SET make = ?, model = ?, color = ?, license_plate = ?, permit_number = ?, notes = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE app_vehicle_parking_registry__vehicles SET make = ?, model = ?, color = ?, license_plate = ?, permit_number = ?, notes = ?, updated_at = ? WHERE id = ?`,
         [make, model, color, plate, permit, notes, now, existingId]
       );
       logActivity(existingId, "updated", `${ME?.name ?? "Someone"} updated ${vehicleLabel({ make, model })}`).catch(() => {});
@@ -464,7 +464,7 @@ window.submitVehicle = async function(existingId) {
       render();
       if (DB) {
         await db(
-          `INSERT INTO vehicles (id, owner_id, make, model, color, license_plate, permit_number, status, notes, created_at, updated_at)
+          `INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, status, notes, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
           [id, ME?.id ?? "system", make, model, color, plate, permit, notes, now, now]
         ).catch(() => { vehicles = vehicles.filter(x => x.id !== id); render(); });
@@ -486,7 +486,7 @@ window.deleteVehicle = async function(id) {
   vehicles = vehicles.filter(x => x.id !== id);
   closeModal();
   render();
-  await db(`DELETE FROM vehicles WHERE id = ?`, [id]).catch(() => {});
+  await db(`DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = ?`, [id]).catch(() => {});
 };
 
 // ---- Vehicle detail (with flags + flag action) ----
@@ -596,11 +596,11 @@ window.submitFlag = async function(vehicleId) {
     render();
 
     await db(
-      `INSERT INTO flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
+      `INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'open', ?)`,
       [flagId, vehicleId, ME?.id ?? "system", reason, violationId, now]
     );
-    await db(`UPDATE vehicles SET status = 'flagged', updated_at = ? WHERE id = ?`, [now, vehicleId]);
+    await db(`UPDATE app_vehicle_parking_registry__vehicles SET status = 'flagged', updated_at = ? WHERE id = ?`, [now, vehicleId]);
 
     // Cross-post to Violation Tracking's inbox — it drains this on its next load
     crossWrite("violation-tracking", "pending_violations", [{
@@ -630,13 +630,13 @@ window.submitResolveFlag = async function(vehicleId, flagId) {
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
   try {
     const now = new Date().toISOString();
-    await db(`UPDATE flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
+    await db(`UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
 
     const remaining = (await loadFlags(vehicleId)).filter(f => f.id !== flagId && f.status === "open");
     if (remaining.length === 0) {
       const idx = vehicles.findIndex(x => x.id === vehicleId);
       if (idx !== -1) vehicles[idx] = { ...vehicles[idx], status: "active", updated_at: now };
-      await db(`UPDATE vehicles SET status = 'active', updated_at = ? WHERE id = ?`, [now, vehicleId]);
+      await db(`UPDATE app_vehicle_parking_registry__vehicles SET status = 'active', updated_at = ? WHERE id = ?`, [now, vehicleId]);
     }
 
     logActivity(vehicleId, "flag_resolved", `${ME?.name ?? "Leadership"} resolved a flag`).catch(() => {});
@@ -745,7 +745,7 @@ window.submitSpot = async function(existingId) {
       closeModal();
       render();
       await db(
-        `UPDATE parking_spots SET label = ?, spot_type = ?, assigned_unit_id = ?, assigned_vehicle_id = ?, notes = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE app_vehicle_parking_registry__parking_spots SET label = ?, spot_type = ?, assigned_unit_id = ?, assigned_vehicle_id = ?, notes = ?, updated_at = ? WHERE id = ?`,
         [label, type, unitId, vehicleId, notes, now, existingId]
       );
     } else {
@@ -755,7 +755,7 @@ window.submitSpot = async function(existingId) {
       closeModal();
       render();
       await db(
-        `INSERT INTO parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, notes, created_at, updated_at)
+        `INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [id, label, type, unitId, vehicleId, notes, now, now]
       ).catch(() => { spots = spots.filter(x => x.id !== id); render(); });
@@ -772,7 +772,7 @@ window.deleteSpot = async function(id) {
   spots = spots.filter(x => x.id !== id);
   closeModal();
   render();
-  await db(`DELETE FROM parking_spots WHERE id = ?`, [id]).catch(() => {});
+  await db(`DELETE FROM app_vehicle_parking_registry__parking_spots WHERE id = ?`, [id]).catch(() => {});
 };
 
 // ---- deep link ----
