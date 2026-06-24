@@ -7,9 +7,8 @@ export function boardGroup(groups, boardGroupId) {
 
 export function isBoard(member, groups, boardGroupId) {
   if (!member) return false;
-  if (member.isAdmin) return true;
   const g = boardGroup(groups, boardGroupId);
-  if (!g) return member.role === "board";
+  if (!g) return false;
   return Array.isArray(g.memberIds) && g.memberIds.includes(member.id);
 }
 
@@ -18,8 +17,8 @@ export function canEditVehicle(vehicle, me) {
   return vehicle.owner_id === me.id;
 }
 
-export function canDeleteVehicle(vehicle, me) {
-  return canEditVehicle(vehicle, me);
+export function canDeleteVehicle(me, groups, boardGroupId) {
+  return isBoard(me, groups, boardGroupId);
 }
 
 export function canFlagVehicle(me, groups, boardGroupId) {
@@ -40,7 +39,7 @@ export function vehicleStatusLabel(status) {
     active:  "Active",
     flagged: "Flagged",
     expired: "Expired",
-  }[status] ?? status;
+  }[status] ?? "Unknown";
 }
 
 export function vehicleStatusColor(status) {
@@ -55,7 +54,7 @@ export function flagStatusLabel(status) {
   return {
     open:     "Open",
     resolved: "Resolved",
-  }[status] ?? status;
+  }[status] ?? "Unknown";
 }
 
 export function spotTypeLabel(type) {
@@ -63,7 +62,7 @@ export function spotTypeLabel(type) {
     assigned:  "Assigned",
     visitor:   "Visitor",
     unassigned: "Unassigned",
-  }[type] ?? type;
+  }[type] ?? "Unknown";
 }
 
 export function spotIsAvailable(spot) {

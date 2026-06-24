@@ -25,8 +25,8 @@ describe("boardGroup", () => {
 });
 
 describe("isBoard", () => {
-  it("admins are always board", () => {
-    expect(isBoard(admin, groups, null)).toBe(true);
+  it("admins still require membership in the configured Board group", () => {
+    expect(isBoard(admin, groups, null)).toBe(false);
   });
   it("group member is board when group is configured", () => {
     expect(isBoard(boardM, groups, "g1")).toBe(true);
@@ -34,8 +34,8 @@ describe("isBoard", () => {
   it("non-group member is not board when group is configured", () => {
     expect(isBoard(member1, groups, "g1")).toBe(false);
   });
-  it("falls back to role===board when no group configured", () => {
-    expect(isBoard(boardM, groups, null)).toBe(true);
+  it("fails closed when no group is configured", () => {
+    expect(isBoard(boardM, groups, null)).toBe(false);
     expect(isBoard(member1, groups, null)).toBe(false);
   });
   it("returns false for null member", () => {
@@ -55,9 +55,9 @@ describe("canEditVehicle", () => {
   it("returns false for null member", () => {
     expect(canEditVehicle(vehicle, null)).toBe(false);
   });
-  it("canDeleteVehicle mirrors canEditVehicle", () => {
-    expect(canDeleteVehicle(vehicle, member1)).toBe(true);
-    expect(canDeleteVehicle(vehicle, member2)).toBe(false);
+  it("only configured Board members can delete vehicles", () => {
+    expect(canDeleteVehicle(boardM, groups, "g1")).toBe(true);
+    expect(canDeleteVehicle(member1, groups, "g1")).toBe(false);
   });
 });
 
@@ -100,7 +100,7 @@ describe("vehicleStatusLabel / vehicleStatusColor", () => {
     expect(vehicleStatusLabel("expired")).toBe("Expired");
   });
   it("falls back to raw value for unknown status", () => {
-    expect(vehicleStatusLabel("weird")).toBe("weird");
+    expect(vehicleStatusLabel("weird")).toBe("Unknown");
   });
   it("returns a color string for known and unknown statuses", () => {
     expect(vehicleStatusColor("active")).toBe("#22c55e");
@@ -113,6 +113,9 @@ describe("flagStatusLabel", () => {
     expect(flagStatusLabel("open")).toBe("Open");
     expect(flagStatusLabel("resolved")).toBe("Resolved");
   });
+  it("does not reflect unknown values", () => {
+    expect(flagStatusLabel("<img onerror=alert(1)>")).toBe("Unknown");
+  });
 });
 
 describe("spotTypeLabel", () => {
@@ -120,6 +123,9 @@ describe("spotTypeLabel", () => {
     expect(spotTypeLabel("assigned")).toBe("Assigned");
     expect(spotTypeLabel("visitor")).toBe("Visitor");
     expect(spotTypeLabel("unassigned")).toBe("Unassigned");
+  });
+  it("does not reflect unknown values", () => {
+    expect(spotTypeLabel("<img onerror=alert(1)>")).toBe("Unknown");
   });
 });
 

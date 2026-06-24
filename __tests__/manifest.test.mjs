@@ -38,6 +38,28 @@ describe("manifest.json", () => {
     expect(Array.isArray(manifest.data_access.reads)).toBe(true);
     expect(Array.isArray(manifest.data_access.writes)).toBe(true);
   });
+
+  it("protects app configuration and Board-only operations", () => {
+    expect(manifest.row_policies.settings).toEqual({ kind: "app_config" });
+    expect(manifest.admin_config).toEqual({
+      settings_table: "settings",
+      keys: ["board_group_id"],
+    });
+    expect(manifest.row_policies.vehicles.delete_privileged_only).toBe(true);
+    expect(manifest.row_policies.flags.insert_privileged_only).toBe(true);
+    expect(manifest.row_policies.parking_spots.write_privileged_only).toBe(true);
+  });
+
+  it("gates notifications to the configured Board group", () => {
+    expect(manifest.notification_acls.send.require_group_setting).toEqual({
+      settings_table: "settings",
+      settings_key: "board_group_id",
+    });
+  });
+
+  it("keeps sortable parking spot labels plaintext", () => {
+    expect(manifest.db_plaintext_columns).toContain("label");
+  });
 });
 
 // ── ai_access SQL file validation ─────────────────────────────────────────────

@@ -185,6 +185,7 @@ import {
 
 const CONTEXT = window.__CONTEXT_URL    ?? "";
 const DB      = window.__DB_URL         ?? "";
+const ADMIN_CONFIG = window.__ADMIN_CONFIG_URL ?? "";
 const APP_ID  = window.__APP_ID         ?? "vehicle-parking-registry";
 let ME        = window.__CURRENT_MEMBER ?? null;
 
@@ -192,6 +193,7 @@ let members  = [];
 let groups   = [];
 let vehicles = [];
 let spots    = [];
+let flags    = [];
 let appSettings = { board_group_id: null };
 let view     = "mine";   // "mine" | "registry" | "spots"
 let statusFilter = "all";
@@ -202,7 +204,7 @@ let memberMap = new Map();
 // ---- role helpers ----
 function isBoard(m)        { return _isBoard(m, groups, appSettings.board_group_id); }
 function canEditVehicle(v) { return _canEditVehicle(v, ME); }
-function canDeleteVehicle(v) { return _canDeleteVehicle(v, ME); }
+function canDeleteVehicle() { return _canDeleteVehicle(ME, groups, appSettings.board_group_id); }
 function canFlagVehicle()  { return _canFlagVehicle(ME, groups, appSettings.board_group_id); }
 function canResolveFlag(f) { return _canResolveFlag(f, ME, groups, appSettings.board_group_id); }
 function canManageSpots()  { return _canManageSpots(ME, groups, appSettings.board_group_id); }
@@ -215,7 +217,11 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  return res.json();
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) {
+    throw new Error(body.error ?? `Database request failed (${res.status})`);
+  }
+  return body;
 }
 
 // ---- data loading ----
@@ -249,9 +255,9 @@ async function loadVehicles() {
   if (!DB) {
     if (!vehicles.length) {
       vehicles = [
-        { id: "v1", owner_id: "m2", make: "Honda", model: "Civic", color: "Blue", license_plate: "7ABC123", permit_number: "P-104", status: "active",  notes: "", created_at: "2026-05-01T10:00:00Z", updated_at: "2026-05-01T10:00:00Z" },
-        { id: "v2", owner_id: "m3", make: "Toyota", model: "RAV4", color: "Silver", license_plate: "8XYZ987", permit_number: "P-211", status: "flagged", notes: "", created_at: "2026-04-12T10:00:00Z", updated_at: "2026-05-20T10:00:00Z" },
-        { id: "v3", owner_id: "m2", make: "Ford",  model: "F-150", color: "Black", license_plate: "9LMN456", permit_number: "",      status: "active",  notes: "Visitor — staying through June", created_at: "2026-05-22T10:00:00Z", updated_at: "2026-05-22T10:00:00Z" },
+        { id: "v1", owner_id: "m2", make: "Honda", model: "Civic", color: "Blue", license_plate: "7ABC123", permit_number: "P-104", notes: "", created_at: "2026-05-01T10:00:00Z", updated_at: "2026-05-01T10:00:00Z" },
+        { id: "v2", owner_id: "m3", make: "Toyota", model: "RAV4", color: "Silver", license_plate: "8XYZ987", permit_number: "P-211", notes: "", created_at: "2026-04-12T10:00:00Z", updated_at: "2026-05-20T10:00:00Z" },
+        { id: "v3", owner_id: "m2", make: "Ford",  model: "F-150", color: "Black", license_plate: "9LMN456", permit_number: "", notes: "Visitor — staying through June", created_at: "2026-05-22T10:00:00Z", updated_at: "2026-05-22T10:00:00Z" },
       ];
     }
     return;
@@ -264,9 +270,9 @@ async function loadSpots() {
   if (!DB) {
     if (!spots.length) {
       spots = [
-        { id: "s1", label: "Lot A-12", spot_type: "assigned", assigned_unit_id: "m2", assigned_vehicle_id: "v1", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
-        { id: "s2", label: "Lot A-13", spot_type: "assigned", assigned_unit_id: "m3", assigned_vehicle_id: "v2", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
-        { id: "s3", label: "Visitor 1", spot_type: "visitor", assigned_unit_id: null, assigned_vehicle_id: null, notes: "2-hour limit", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+        { id: "s1", label: "Lot A-12", spot_type: "assigned", assigned_unit_id: "m2", assigned_vehicle_id: "v1", created_by: "m1", visibility: "everyone", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+        { id: "s2", label: "Lot A-13", spot_type: "assigned", assigned_unit_id: "m3", assigned_vehicle_id: "v2", created_by: "m1", visibility: "everyone", notes: "", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
+        { id: "s3", label: "Visitor 1", spot_type: "visitor", assigned_unit_id: null, assigned_vehicle_id: null, created_by: "m1", visibility: "everyone", notes: "2-hour limit", created_at: "2026-04-01T10:00:00Z", updated_at: "2026-04-01T10:00:00Z" },
       ];
     }
     return;
@@ -275,26 +281,20 @@ async function loadSpots() {
   spots = rows;
 }
 
-async function loadFlags(vehicleId) {
+async function loadAllFlags() {
   if (!DB) {
-    const demo = {
-      v2: [{ id: "f1", vehicle_id: "v2", flagged_by: "m1", reason: "Parked in fire lane for 3+ days.", violation_id: "demo-violation-1", status: "open", created_at: "2026-05-20T09:00:00Z", resolved_at: null }],
-    };
-    return demo[vehicleId] ?? [];
+    flags = [{ id: "f1", vehicle_id: "v2", flagged_by: "m1", reason: "Parked in fire lane for 3+ days.", violation_id: "demo-violation-1", status: "open", created_at: "2026-05-20T09:00:00Z", resolved_at: null }];
+    return;
   }
-  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__flags WHERE vehicle_id = ? ORDER BY created_at DESC`, [vehicleId]);
-  return rows;
+  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__flags ORDER BY created_at DESC`);
+  flags = rows;
 }
 
-// ---- activity / notifications ----
-async function logActivity(recordId, action, detail = "") {
-  const id = crypto.randomUUID();
-  await db(
-    `INSERT INTO app_vehicle_parking_registry__activity (id, record_id, actor_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, recordId, ME?.id ?? "system", action, detail, new Date().toISOString()]
-  );
+function loadFlags(vehicleId) {
+  return flags.filter(flag => flag.vehicle_id === vehicleId);
 }
 
+// ---- notifications ----
 async function notify(title, body) {
   await fetch(window.__NOTIFY_URL ?? "/api/notifications/send", {
     method: "POST",
@@ -311,6 +311,12 @@ function fmt(iso) {
 }
 function vehicleLabel(v) {
   return [v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+}
+function vehicleStatus(v) {
+  return flags.some(flag => flag.vehicle_id === v.id && flag.status === "open") ? "flagged" : "active";
+}
+function jsArg(value) {
+  return esc(JSON.stringify(String(value)));
 }
 
 // ---- modal ----
@@ -342,6 +348,9 @@ function render() {
     : view === "spots" && canManageSpots()
       ? `<button class="btn btn-icon" onclick="openSpotModal()" title="Add Spot">＋</button>`
       : "";
+  const settingsBtn = ME?.isAdmin
+    ? `<button class="btn btn-ghost btn-sm" onclick="openBoardConfig()">⚙️ Board</button>`
+    : "";
 
   document.getElementById("app").innerHTML = `
     <header>
@@ -349,7 +358,7 @@ function render() {
         <div style="font-size:1.2rem;font-weight:700">🚗 Vehicle &amp; Parking Registry</div>
         <div class="sub">${boardView ? `${vehicles.length} vehicle${vehicles.length !== 1 ? "s" : ""} registered` : "Manage your household's vehicles and parking"}</div>
       </div>
-      <div class="header-actions">${addBtn}</div>
+      <div class="header-actions">${settingsBtn}${addBtn}</div>
     </header>
     <div class="tabs">${tabsHtml}</div>
     <div id="view-body"></div>
@@ -372,9 +381,10 @@ function renderMyVehicles() {
 }
 
 function vehicleCardHtml(v) {
-  const color = vehicleStatusColor(v.status);
+  const status = vehicleStatus(v);
+  const color = vehicleStatusColor(status);
   return `
-    <div class="card ${v.status === "flagged" ? "flagged" : ""}" onclick="openVehicleDetail('${esc(v.id)}')">
+    <div class="card ${status === "flagged" ? "flagged" : ""}" onclick="openVehicleDetail(${jsArg(v.id)})">
       <div class="c-top">
         <div class="c-icon">🚗</div>
         <div class="c-body">
@@ -383,7 +393,7 @@ function vehicleCardHtml(v) {
         </div>
       </div>
       <div class="c-footer">
-        <span class="badge" style="background:${color}">${vehicleStatusLabel(v.status)}</span>
+        <span class="badge" style="background:${color}">${esc(vehicleStatusLabel(status))}</span>
         <span class="badge badge-outline">${esc(memberName(v.owner_id))}</span>
       </div>
     </div>`;
@@ -391,15 +401,15 @@ function vehicleCardHtml(v) {
 
 // ---- Registry (board) ----
 function renderRegistry() {
-  const tabs = ["all", "active", "flagged", "expired"];
+  const tabs = ["all", "active", "flagged"];
   const tabsHtml = tabs.map(t =>
     `<button class="filter-tab ${statusFilter === t ? "active" : ""}" onclick="setStatusFilter('${t}')">
-      ${t === "all" ? "All" : vehicleStatusLabel(t)}
+      ${t === "all" ? "All" : esc(vehicleStatusLabel(t))}
     </button>`
   ).join("");
 
   let list = vehicles;
-  if (statusFilter !== "all") list = list.filter(v => v.status === statusFilter);
+  if (statusFilter !== "all") list = list.filter(v => vehicleStatus(v) === statusFilter);
 
   const cardsHtml = list.length === 0
     ? `<div class="empty"><div class="empty-icon">✅</div>No vehicles found.</div>`
@@ -425,7 +435,7 @@ window.openVehicleModal = function(existingId) {
     <div class="form-group"><label>Notes (optional)</label><textarea id="f-notes" placeholder="e.g. visiting through June">${esc(v?.notes ?? "")}</textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitVehicle('${v?.id ?? ""}')">${v ? "Save" : "Register"}</button>
+      <button class="btn btn-primary" onclick="submitVehicle(${jsArg(v?.id ?? "")})">${v ? "Save" : "Register"}</button>
     </div>
   `);
 };
@@ -445,90 +455,102 @@ window.submitVehicle = async function(existingId) {
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
   if (btn) { btn.disabled = true; btn.textContent = existingId ? "Saving…" : "Registering…"; }
 
+  let previousVehicle = null;
+  let createdId = null;
   try {
     const now = new Date().toISOString();
     if (existingId) {
       const idx = vehicles.findIndex(x => x.id === existingId);
-      if (idx !== -1) vehicles[idx] = { ...vehicles[idx], make, model, color, license_plate: plate, permit_number: permit, notes, updated_at: now };
+      if (idx !== -1) {
+        previousVehicle = vehicles[idx];
+        vehicles[idx] = { ...vehicles[idx], make, model, color, license_plate: plate, permit_number: permit, notes, updated_at: now };
+      }
       closeModal();
       render();
       await db(
         `UPDATE app_vehicle_parking_registry__vehicles SET make = ?, model = ?, color = ?, license_plate = ?, permit_number = ?, notes = ?, updated_at = ? WHERE id = ?`,
         [make, model, color, plate, permit, notes, now, existingId]
       );
-      logActivity(existingId, "updated", `${ME?.name ?? "Someone"} updated ${vehicleLabel({ make, model })}`).catch(() => {});
     } else {
       const id = crypto.randomUUID();
-      vehicles.unshift({ id, owner_id: ME?.id ?? "system", make, model, color, license_plate: plate, permit_number: permit, status: "active", notes, created_at: now, updated_at: now });
+      createdId = id;
+      vehicles.unshift({ id, owner_id: ME?.id ?? "system", make, model, color, license_plate: plate, permit_number: permit, notes, created_at: now, updated_at: now });
       closeModal();
       render();
-      if (DB) {
-        await db(
-          `INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, status, notes, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
-          [id, ME?.id ?? "system", make, model, color, plate, permit, notes, now, now]
-        ).catch(() => { vehicles = vehicles.filter(x => x.id !== id); render(); });
-      }
-      Promise.all([
-        logActivity(id, "registered", `${ME?.name ?? "Someone"} registered ${vehicleLabel({ make, model })} (${plate})`),
-        notify("Vehicle Registered", `${ME?.name ?? "A member"} registered a ${make} ${model}.`),
-      ]).catch(() => {});
+      await db(
+        `INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, ME?.id ?? "system", make, model, color, plate, permit, notes, now, now]
+      );
     }
   } catch (e) {
+    if (previousVehicle) {
+      const idx = vehicles.findIndex(x => x.id === previousVehicle.id);
+      if (idx !== -1) vehicles[idx] = previousVehicle;
+    }
+    if (createdId) vehicles = vehicles.filter(x => x.id !== createdId);
+    render();
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Register"; }
-    throw e;
+    alert(e?.message ?? "Unable to save vehicle");
   }
 };
 
 window.deleteVehicle = async function(id) {
   const ok = await hubConfirm({ message: "Remove this vehicle from the registry?", destructive: true, confirmLabel: "Remove" });
   if (!ok) return;
+  const previousVehicles = vehicles;
   vehicles = vehicles.filter(x => x.id !== id);
   closeModal();
   render();
-  await db(`DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = ?`, [id]).catch(() => {});
+  try {
+    await db(`DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = ?`, [id]);
+  } catch (error) {
+    vehicles = previousVehicles;
+    render();
+    alert(error?.message ?? "Unable to remove vehicle");
+  }
 };
 
 // ---- Vehicle detail (with flags + flag action) ----
 window.openVehicleDetail = async function(id) {
   const v = vehicles.find(x => x.id === id);
   if (!v) return;
-  const flags = await loadFlags(id);
-  renderVehicleDetail(v, flags);
+  renderVehicleDetail(v, loadFlags(id));
 };
 
 function renderVehicleDetail(v, flags) {
-  const color = vehicleStatusColor(v.status);
+  const status = vehicleStatus(v);
+  const color = vehicleStatusColor(status);
 
   const flagsHtml = flags.length === 0
     ? `<div style="color:var(--muted);font-size:0.85rem">No flags on record.</div>`
     : flags.map(f => `
         <div class="flag-row">
           <div class="flag-meta">
-            ${esc(memberName(f.flagged_by))} · ${fmt(f.created_at)} ·
-            <span class="badge ${f.status === "open" ? "" : "badge-outline"}" style="${f.status === "open" ? "background:#ef4444" : ""}">${flagStatusLabel(f.status)}</span>
+            ${esc(memberName(f.flagged_by))} · ${esc(fmt(f.created_at))} ·
+            <span class="badge ${f.status === "open" ? "" : "badge-outline"}" style="${f.status === "open" ? "background:#ef4444" : ""}">${esc(flagStatusLabel(f.status))}</span>
           </div>
           <div class="flag-reason">${esc(f.reason)}</div>
-          ${f.violation_id ? `<button class="link-btn" style="margin-top:4px" onclick="hubOpenViolation('${esc(f.violation_id)}')">View in Violation Tracking →</button>` : ""}
-          ${canResolveFlag(f) ? `<div style="margin-top:6px"><button class="btn btn-sm btn-green" onclick="submitResolveFlag('${esc(v.id)}','${esc(f.id)}')">Mark Resolved</button></div>` : ""}
+          ${f.violation_id ? `<button class="link-btn" style="margin-top:4px" onclick="hubOpenViolation(${jsArg(f.violation_id)})">View in Violation Tracking →</button>` : ""}
+          ${canResolveFlag(f) ? `<div style="margin-top:6px"><button class="btn btn-sm btn-green" onclick="submitResolveFlag(${jsArg(v.id)},${jsArg(f.id)})">Mark Resolved</button></div>` : ""}
         </div>`).join("");
 
-  const ownerActions = canEditVehicle(v) ? `
+  const ownerActions = canEditVehicle(v) || canDeleteVehicle() ? `
     <div class="modal-actions" style="justify-content:flex-start;margin-top:8px">
-      <button class="btn btn-sm btn-ghost" onclick="openVehicleModal('${esc(v.id)}')">Edit</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteVehicle('${esc(v.id)}')">Remove</button>
+      ${canEditVehicle(v) ? `<button class="btn btn-sm btn-ghost" onclick="openVehicleModal(${jsArg(v.id)})">Edit</button>` : ""}
+      ${canDeleteVehicle() ? `<button class="btn btn-sm btn-danger" onclick="deleteVehicle(${jsArg(v.id)})">Remove</button>` : ""}
     </div>` : "";
 
   const flagAction = canFlagVehicle() ? `
     <div class="section-title">Leadership Actions</div>
-    <button class="btn btn-sm btn-warning" onclick="openFlagModal('${esc(v.id)}')">🚩 Flag Vehicle</button>` : "";
+    <button class="btn btn-sm btn-warning" onclick="openFlagModal(${jsArg(v.id)})">🚩 Flag Vehicle</button>` : "";
 
   openModal(`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <span style="font-size:1.8rem">🚗</span>
       <div>
         <div class="modal-title" style="margin-bottom:4px">${esc(vehicleLabel(v))}</div>
-        <span class="badge" style="background:${color}">${vehicleStatusLabel(v.status)}</span>
+        <span class="badge" style="background:${color}">${esc(vehicleStatusLabel(status))}</span>
       </div>
     </div>
     <div class="detail-field"><div class="detail-label">Owner</div><div class="detail-value">${esc(memberName(v.owner_id))}</div></div>
@@ -567,7 +589,7 @@ window.openFlagModal = function(vehicleId) {
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-warning" onclick="submitFlag('${esc(vehicleId)}')">Flag &amp; Issue Violation</button>
+      <button class="btn btn-warning" onclick="submitFlag(${jsArg(vehicleId)})">Flag &amp; Issue Violation</button>
     </div>
   `);
 };
@@ -584,14 +606,17 @@ window.submitFlag = async function(vehicleId) {
   const btn = modalEl?.querySelector(".modal-actions .btn-warning");
   if (btn) { btn.disabled = true; btn.textContent = "Flagging…"; }
 
+  let createdFlagId = null;
   try {
     const now = new Date().toISOString();
     const flagId = crypto.randomUUID();
+    createdFlagId = flagId;
     const violationId = crypto.randomUUID(); // generated here so both apps reference the same id
 
-    // Optimistic: mark vehicle flagged, close modal, render immediately
-    const idx = vehicles.findIndex(x => x.id === vehicleId);
-    if (idx !== -1) vehicles[idx] = { ...vehicles[idx], status: "flagged", updated_at: now };
+    flags = [{
+      id: flagId, vehicle_id: vehicleId, flagged_by: ME?.id ?? "system",
+      reason, violation_id: violationId, status: "open", created_at: now, resolved_at: null,
+    }, ...flags];
     closeModal();
     render();
 
@@ -600,10 +625,9 @@ window.submitFlag = async function(vehicleId) {
        VALUES (?, ?, ?, ?, ?, 'open', ?)`,
       [flagId, vehicleId, ME?.id ?? "system", reason, violationId, now]
     );
-    await db(`UPDATE app_vehicle_parking_registry__vehicles SET status = 'flagged', updated_at = ? WHERE id = ?`, [now, vehicleId]);
 
     // Cross-post to Violation Tracking's inbox — it drains this on its next load
-    crossWrite("violation-tracking", "pending_violations", [{
+    await crossWrite("violation-tracking", "pending_violations", [{
       op: "array_append", path: "items",
       value: {
         id: violationId,
@@ -613,33 +637,28 @@ window.submitFlag = async function(vehicleId) {
         description: buildViolationDescription(v, reason),
         cure_deadline: deadline,
       },
-    }]).catch(() => {});
+    }]);
 
-    Promise.all([
-      logActivity(vehicleId, "flagged", `${ME?.name ?? "Leadership"} flagged ${vehicleLabel(v)}: ${reason}`),
-      notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`),
-    ]).catch(() => {});
+    notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`).catch(() => {});
   } catch (e) {
+    flags = flags.filter(flag => flag.id !== createdFlagId);
+    if (createdFlagId) {
+      await db(`DELETE FROM app_vehicle_parking_registry__flags WHERE id = ?`, [createdFlagId]).catch(() => {});
+    }
+    render();
     if (btn) { btn.disabled = false; btn.textContent = "Flag & Issue Violation"; }
     throw e;
   }
 };
 
 window.submitResolveFlag = async function(vehicleId, flagId) {
-  const btn = modalEl?.querySelector(`button[onclick="submitResolveFlag('${vehicleId}','${flagId}')"]`);
+  const btn = modalEl?.querySelector(".btn-green");
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
   try {
     const now = new Date().toISOString();
     await db(`UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
-
-    const remaining = (await loadFlags(vehicleId)).filter(f => f.id !== flagId && f.status === "open");
-    if (remaining.length === 0) {
-      const idx = vehicles.findIndex(x => x.id === vehicleId);
-      if (idx !== -1) vehicles[idx] = { ...vehicles[idx], status: "active", updated_at: now };
-      await db(`UPDATE app_vehicle_parking_registry__vehicles SET status = 'active', updated_at = ? WHERE id = ?`, [now, vehicleId]);
-    }
-
-    logActivity(vehicleId, "flag_resolved", `${ME?.name ?? "Leadership"} resolved a flag`).catch(() => {});
+    const idx = flags.findIndex(flag => flag.id === flagId);
+    if (idx !== -1) flags[idx] = { ...flags[idx], status: "resolved", resolved_at: now };
     openVehicleDetail(vehicleId);
     render();
   } catch (e) {
@@ -660,9 +679,9 @@ function spotTileHtml(s) {
   const occupied = !spotIsAvailable(s);
   const vehicle = occupied ? vehicles.find(v => v.id === s.assigned_vehicle_id) : null;
   return `
-    <div class="spot-tile ${occupied ? "occupied" : ""}" onclick="openSpotDetail('${esc(s.id)}')">
+    <div class="spot-tile ${occupied ? "occupied" : ""}" onclick="openSpotDetail(${jsArg(s.id)})">
       <div class="spot-label">${esc(s.label)}</div>
-      <div class="spot-meta">${spotTypeLabel(s.spot_type)}</div>
+      <div class="spot-meta">${esc(spotTypeLabel(s.spot_type))}</div>
       <div class="spot-meta">${occupied ? esc(`${vehicleLabel(vehicle ?? {})} · ${memberName(s.assigned_unit_id)}`) : "Unassigned"}</div>
     </div>`;
 }
@@ -674,13 +693,13 @@ window.openSpotDetail = function(id) {
 
   const manage = canManageSpots() ? `
     <div class="modal-actions" style="justify-content:flex-start">
-      <button class="btn btn-sm btn-ghost" onclick="openSpotModal('${esc(s.id)}')">Edit / Reassign</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteSpot('${esc(s.id)}')">Remove</button>
+      <button class="btn btn-sm btn-ghost" onclick="openSpotModal(${jsArg(s.id)})">Edit / Reassign</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSpot(${jsArg(s.id)})">Remove</button>
     </div>` : "";
 
   openModal(`
     <div class="modal-title">🅿️ ${esc(s.label)}</div>
-    <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${spotTypeLabel(s.spot_type)}</div></div>
+    <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${esc(spotTypeLabel(s.spot_type))}</div></div>
     <div class="detail-field"><div class="detail-label">Assigned To</div><div class="detail-value">${s.assigned_unit_id ? esc(memberName(s.assigned_unit_id)) : "—"}</div></div>
     <div class="detail-field"><div class="detail-label">Vehicle</div><div class="detail-value">${vehicle ? esc(`${vehicleLabel(vehicle)} (${vehicle.license_plate})`) : "—"}</div></div>
     ${s.notes ? `<div class="detail-field"><div class="detail-label">Notes</div><div class="detail-value">${esc(s.notes)}</div></div>` : ""}
@@ -720,7 +739,7 @@ window.openSpotModal = function(existingId) {
     <div class="form-group"><label>Notes (optional)</label><textarea id="f-notes">${esc(s?.notes ?? "")}</textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitSpot('${s?.id ?? ""}')">${s ? "Save" : "Add Spot"}</button>
+      <button class="btn btn-primary" onclick="submitSpot(${jsArg(s?.id ?? "")})">${s ? "Save" : "Add Spot"}</button>
     </div>
   `);
 };
@@ -737,11 +756,16 @@ window.submitSpot = async function(existingId) {
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
 
+  let previousSpot = null;
+  let createdId = null;
   try {
     const now = new Date().toISOString();
     if (existingId) {
       const idx = spots.findIndex(x => x.id === existingId);
-      if (idx !== -1) spots[idx] = { ...spots[idx], label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, updated_at: now };
+      if (idx !== -1) {
+        previousSpot = spots[idx];
+        spots[idx] = { ...spots[idx], label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, updated_at: now };
+      }
       closeModal();
       render();
       await db(
@@ -750,29 +774,92 @@ window.submitSpot = async function(existingId) {
       );
     } else {
       const id = crypto.randomUUID();
-      spots.push({ id, label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, created_at: now, updated_at: now });
+      createdId = id;
+      spots.push({ id, label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, created_by: ME?.id, visibility: "everyone", notes, created_at: now, updated_at: now });
       spots.sort((a, b) => a.label.localeCompare(b.label));
       closeModal();
       render();
       await db(
-        `INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, label, type, unitId, vehicleId, notes, now, now]
-      ).catch(() => { spots = spots.filter(x => x.id !== id); render(); });
+        `INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'everyone', ?, ?, ?)`,
+        [id, label, type, unitId, vehicleId, ME?.id, notes, now, now]
+      );
     }
   } catch (e) {
+    if (previousSpot) {
+      const idx = spots.findIndex(x => x.id === previousSpot.id);
+      if (idx !== -1) spots[idx] = previousSpot;
+    }
+    if (createdId) spots = spots.filter(x => x.id !== createdId);
+    render();
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Add Spot"; }
-    throw e;
+    alert(e?.message ?? "Unable to save parking spot");
   }
 };
 
 window.deleteSpot = async function(id) {
   const ok = await hubConfirm({ message: "Remove this parking spot?", destructive: true, confirmLabel: "Remove" });
   if (!ok) return;
+  const previousSpots = spots;
   spots = spots.filter(x => x.id !== id);
   closeModal();
   render();
-  await db(`DELETE FROM app_vehicle_parking_registry__parking_spots WHERE id = ?`, [id]).catch(() => {});
+  try {
+    await db(`DELETE FROM app_vehicle_parking_registry__parking_spots WHERE id = ?`, [id]);
+  } catch (error) {
+    spots = previousSpots;
+    render();
+    alert(error?.message ?? "Unable to remove parking spot");
+  }
+};
+
+// ---- Board configuration (Hub-admin only) ----
+window.openBoardConfig = function() {
+  if (!ME?.isAdmin) return;
+  const options = groups.map(group =>
+    `<option value="${esc(group.id)}" ${appSettings.board_group_id === group.id ? "selected" : ""}>${esc(group.name)}</option>`
+  ).join("");
+  openModal(`
+    <div class="modal-title">Configure Board Group</div>
+    <div class="form-group">
+      <label>Board group</label>
+      <select id="bc-group">
+        <option value="">— none —</option>
+        ${options}
+      </select>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">
+        Only members of this group may manage spots, issue or resolve flags, delete vehicles, and send compliance notifications.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBoardConfig()">Save</button>
+    </div>
+  `);
+};
+
+window.saveBoardConfig = async function() {
+  if (!ME?.isAdmin || !ADMIN_CONFIG) return;
+  const groupId = document.getElementById("bc-group")?.value ?? "";
+  const btn = modalEl?.querySelector(".btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    const res = await fetch(ADMIN_CONFIG, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "board_group_id", value: groupId }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? `Save failed (${res.status})`);
+    }
+    appSettings.board_group_id = groupId || null;
+    closeModal();
+    render();
+  } catch (error) {
+    if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+    alert(error?.message ?? "Save failed");
+  }
 };
 
 // ---- deep link ----
@@ -787,7 +874,7 @@ function handleDeepLink() {
 // ---- init ----
 (async () => {
   await Promise.all([loadContext(), loadSettings()]);
-  await Promise.all([loadVehicles(), loadSpots()]);
+  await Promise.all([loadVehicles(), loadSpots(), loadAllFlags()]);
   render();
   handleDeepLink();
 })();

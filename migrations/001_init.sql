@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__vehicles (
   color          TEXT NOT NULL DEFAULT '',
   license_plate  TEXT NOT NULL DEFAULT '',
   permit_number  TEXT NOT NULL DEFAULT '',
-  status         TEXT NOT NULL DEFAULT 'active',
   notes          TEXT NOT NULL DEFAULT '',
   created_at     TEXT NOT NULL,
   updated_at     TEXT NOT NULL,
@@ -25,6 +24,8 @@ CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__parking_spots (
   spot_type           TEXT NOT NULL DEFAULT 'unassigned',
   assigned_unit_id    TEXT,
   assigned_vehicle_id TEXT,
+  created_by          TEXT NOT NULL,
+  visibility          TEXT NOT NULL DEFAULT 'everyone',
   notes               TEXT NOT NULL DEFAULT '',
   created_at          TEXT NOT NULL,
   updated_at          TEXT NOT NULL,
@@ -43,24 +44,14 @@ CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__flags (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS app_vehicle_parking_registry__activity (
-  id            TEXT NOT NULL,
-  record_id     TEXT NOT NULL,
-  actor_id      TEXT NOT NULL,
-  action        TEXT NOT NULL,
-  detail        TEXT NOT NULL DEFAULT '',
-  created_at    TEXT NOT NULL,
-  PRIMARY KEY (id)
-);
-
 CREATE INDEX IF NOT EXISTS idx_vpr_vehicles_owner
   ON app_vehicle_parking_registry__vehicles (owner_id);
 
-CREATE INDEX IF NOT EXISTS idx_vpr_vehicles_status
-  ON app_vehicle_parking_registry__vehicles (status);
-
 CREATE INDEX IF NOT EXISTS idx_vpr_spots_assigned_vehicle
   ON app_vehicle_parking_registry__parking_spots (assigned_vehicle_id);
+
+CREATE INDEX IF NOT EXISTS idx_vpr_spots_label
+  ON app_vehicle_parking_registry__parking_spots (label);
 
 CREATE INDEX IF NOT EXISTS idx_vpr_flags_vehicle
   ON app_vehicle_parking_registry__flags (vehicle_id);
@@ -68,5 +59,5 @@ CREATE INDEX IF NOT EXISTS idx_vpr_flags_vehicle
 CREATE INDEX IF NOT EXISTS idx_vpr_flags_status
   ON app_vehicle_parking_registry__flags (status);
 
-CREATE INDEX IF NOT EXISTS idx_vpr_activity_record
-  ON app_vehicle_parking_registry__activity (record_id);
+CREATE INDEX IF NOT EXISTS idx_vpr_flags_vehicle_created
+  ON app_vehicle_parking_registry__flags (vehicle_id, created_at DESC);
