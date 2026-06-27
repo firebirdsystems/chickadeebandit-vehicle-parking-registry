@@ -295,12 +295,23 @@ function loadFlags(vehicleId) {
 }
 
 // ---- notifications ----
-async function notify(title, body) {
+// `audience` defaults to "all" (whole household). Vehicles and flags are only
+// readable by the owner + board, so flag notices MUST scope the audience to those
+// members — a household-wide push would leak which resident's vehicle was flagged
+// (and why) to everyone. Pass an explicit member-id array for restricted content.
+async function notify(title, body, audience = "all") {
   await fetch(window.__NOTIFY_URL ?? "/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}`, audience }),
   }).catch(() => {});
+}
+
+// Members who may see a vehicle's flags: its owner plus the board group.
+function flagAudience(ownerId) {
+  const board = groups.find(g => g.id === appSettings.board_group_id);
+  const boardIds = Array.isArray(board?.memberIds) ? board.memberIds : [];
+  return [...new Set([ownerId, ...boardIds].filter(Boolean))];
 }
 
 // ---- helpers ----
@@ -639,7 +650,7 @@ window.submitFlag = async function(vehicleId) {
       },
     }]);
 
-    notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`).catch(() => {});
+    notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`, flagAudience(v.owner_id)).catch(() => {});
   } catch (e) {
     flags = flags.filter(flag => flag.id !== createdFlagId);
     if (createdFlagId) {
