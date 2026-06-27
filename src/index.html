@@ -173,7 +173,7 @@
 </div>
 
 <script type="module">
-import { esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate } from "/hub-sdk.js";
+import { hubAlert, esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate } from "/hub-sdk.js";
 import {
   isBoard as _isBoard,
   canEditVehicle as _canEditVehicle, canDeleteVehicle as _canDeleteVehicle,
@@ -502,7 +502,7 @@ window.submitVehicle = async function(existingId) {
     if (createdId) vehicles = vehicles.filter(x => x.id !== createdId);
     render();
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Register"; }
-    alert(e?.message ?? "Unable to save vehicle");
+    hubAlert(e?.message ?? "Unable to save vehicle");
   }
 };
 
@@ -518,7 +518,7 @@ window.deleteVehicle = async function(id) {
   } catch (error) {
     vehicles = previousVehicles;
     render();
-    alert(error?.message ?? "Unable to remove vehicle");
+    hubAlert(error?.message ?? "Unable to remove vehicle");
   }
 };
 
@@ -804,7 +804,7 @@ window.submitSpot = async function(existingId) {
     if (createdId) spots = spots.filter(x => x.id !== createdId);
     render();
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Add Spot"; }
-    alert(e?.message ?? "Unable to save parking spot");
+    hubAlert(e?.message ?? "Unable to save parking spot");
   }
 };
 
@@ -820,7 +820,7 @@ window.deleteSpot = async function(id) {
   } catch (error) {
     spots = previousSpots;
     render();
-    alert(error?.message ?? "Unable to remove parking spot");
+    hubAlert(error?.message ?? "Unable to remove parking spot");
   }
 };
 
@@ -869,7 +869,7 @@ window.saveBoardConfig = async function() {
     render();
   } catch (error) {
     if (btn) { btn.disabled = false; btn.textContent = "Save"; }
-    alert(error?.message ?? "Save failed");
+    hubAlert(error?.message ?? "Save failed");
   }
 };
 
