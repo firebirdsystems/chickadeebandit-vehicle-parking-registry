@@ -5,6 +5,21 @@ import {
   vehicleStatusLabel, vehicleStatusColor, flagStatusLabel, spotTypeLabel,
   spotIsAvailable, buildViolationDescription,
 } from "../src/logic.js";
+import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
+
+// ── isBoard ───────────────────────────────────────────────────────────────────
+// Root gate for canDeleteVehicle / canFlagVehicle / canResolveFlag /
+// canManageSpots, which front the vehicles delete_privileged_only, spots
+// write_privileged_only, and flags insert_privileged_only policies. Must satisfy
+// the shared privileged-gate contract (mirrors the hub: no fallback when
+// no board group is configured).
+
+testPrivilegedGateContract("isBoard", isBoard, {
+  member:   { id: "a1", role: "adult" },
+  outsider: { id: "a3", role: "adult" },
+  groups:   [{ id: "g1", memberIds: ["a1", "a2"] }],
+  groupId:  "g1",
+});
 
 const admin   = { id: "a1", name: "Admin",  isAdmin: true };
 const boardM  = { id: "b1", name: "Board",  role: "board" };
