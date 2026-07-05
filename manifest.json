@@ -24,10 +24,9 @@
       "member_column": "owner_id",
       "adults_bypass": false,
       "delete_privileged_only": true,
-      "bypass_group_setting": {
-        "settings_table": "settings",
-        "settings_key": "board_group_id"
-      }
+      "privileged_groups": [
+        { "settings_table": "settings", "settings_key": "board_group_id" }
+      ]
     },
     "parking_spots": {
       "kind": "owner_or_visibility",
@@ -35,10 +34,9 @@
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
       "write_privileged_only": true,
-      "bypass_group_setting": {
-        "settings_table": "settings",
-        "settings_key": "board_group_id"
-      }
+      "privileged_groups": [
+        { "settings_table": "settings", "settings_key": "board_group_id" }
+      ]
     },
     "flags": {
       "kind": "inherit_visibility",
