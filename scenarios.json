@@ -1,0 +1,22 @@
+{
+  "scenarios": [
+    {
+      "name": "members cannot delete vehicles or edit parking spots without privilege",
+      "members": { "member": "adult" },
+      "steps": [
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "DELETE FROM app_vehicle_parking_registry__vehicles",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_vehicle_parking_registry__parking_spots SET visibility = 'everyone'",
+          "expect": { "status": 403 }
+        }
+      ]
+    }
+  ]
+}
