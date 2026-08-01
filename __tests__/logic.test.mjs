@@ -3,7 +3,7 @@ import {
   boardGroup, isBoard,
   canEditVehicle, canDeleteVehicle, canFlagVehicle, canResolveFlag, canManageSpots,
   vehicleStatusLabel, vehicleStatusColor, flagStatusLabel, spotTypeLabel,
-  spotIsAvailable, buildViolationDescription,
+  spotIsAvailable, buildViolationDescription, searchableFields,
 } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
@@ -170,5 +170,17 @@ describe("buildViolationDescription", () => {
     const vehicle = { make: "Toyota", model: "Camry", license_plate: "" };
     expect(buildViolationDescription(vehicle, "Expired permit"))
       .toBe("Toyota Camry: Expired permit");
+  });
+});
+
+describe("searchableFields", () => {
+  it("matches on the plate — the question this registry actually answers", () => {
+    const fields = searchableFields({
+      license_plate: "AB12 CDE", make: "Toyota", model: "Yaris",
+      color: "silver", permit_number: "P-204", notes: "",
+    });
+    expect(fields).toContain("AB12 CDE");
+    expect(fields).toContain("P-204");
+    expect(fields).toContain("silver");
   });
 });

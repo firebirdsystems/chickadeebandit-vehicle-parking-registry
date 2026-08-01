@@ -75,3 +75,13 @@ export function buildViolationDescription(vehicle, reason) {
   const vehicleLabel = parts || "Vehicle";
   return `${vehicleLabel}${plate}: ${reason}`.trim();
 }
+
+/**
+ * Fields the in-app search matches against (see hub-sdk `searchMatch`).
+ * The plate is the point: the question this registry answers is
+ * "whose car is this", asked from the plate on the bumper. Make, model,
+ * colour and permit number are the fallbacks when the plate is partial.
+ */
+export function searchableFields(item) {
+  return [item.license_plate, item.make, item.model, item.color, item.permit_number, item.notes];
+}

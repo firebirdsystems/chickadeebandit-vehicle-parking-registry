@@ -165,6 +165,13 @@
     .spot-tile.occupied { border-left: 4px solid var(--accent); }
     .spot-label { font-weight: 700; font-size: 0.95rem; }
     .spot-meta { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+    .search-row { margin-bottom: 12px; }
+    .search-input {
+      width: 100%; border: 1.5px solid var(--border-mid, var(--border, #d1d5db));
+      border-radius: 8px; padding: 9px 11px; font: inherit;
+      background: var(--surface, var(--card, #fff)); color: var(--text, inherit);
+    }
+    .search-input:focus { outline: none; border-color: var(--accent, #6366f1); }
   </style>
 </head>
 <body>
@@ -173,14 +180,14 @@
 </div>
 
 <script type="module">
-import { hubAlert, esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate } from "/hub-sdk.js";
+import { hubAlert, esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate, searchMatch } from "/hub-sdk.js";
 import {
   isBoard as _isBoard,
   canEditVehicle as _canEditVehicle, canDeleteVehicle as _canDeleteVehicle,
   canFlagVehicle as _canFlagVehicle, canResolveFlag as _canResolveFlag,
   canManageSpots as _canManageSpots,
   vehicleStatusLabel, vehicleStatusColor, flagStatusLabel, spotTypeLabel,
-  spotIsAvailable, buildViolationDescription,
+  spotIsAvailable, buildViolationDescription, searchableFields,
 } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL    ?? "";
@@ -196,6 +203,7 @@ let spots    = [];
 let flags    = [];
 let appSettings = { board_group_id: null };
 let view     = "mine";   // "mine" | "registry" | "spots"
+let searchQ = "";       // in-app search (see logic.js searchableFields)
 let statusFilter = "all";
 let modalEl  = null;
 
@@ -421,16 +429,33 @@ function renderRegistry() {
 
   let list = vehicles;
   if (statusFilter !== "all") list = list.filter(v => vehicleStatus(v) === statusFilter);
+  if (searchQ) list = list.filter(v => searchMatch(searchQ, searchableFields(v)));
 
   const cardsHtml = list.length === 0
-    ? `<div class="empty"><div class="empty-icon">✅</div>No vehicles found.</div>`
+    ? (searchQ
+      ? `<div class="empty"><div class="empty-icon">🔍</div>No vehicles match "${esc(searchQ)}".</div>`
+      : `<div class="empty"><div class="empty-icon">✅</div>No vehicles found.</div>`)
     : list.map(vehicleCardHtml).join("");
 
   document.getElementById("view-body").innerHTML = `
     <div class="filters">${tabsHtml}</div>
-    ${cardsHtml}
+    ${vehicles.length ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search by plate, make or permit…" aria-label="Search by plate, make or permit" value="${esc(searchQ)}" /></div>` : ""}
+    <div id="vehicle-list">${cardsHtml}</div>
   `;
+
+  // renderRegistry rewrites the view body, so put the caret back after typing.
+  const searchEl = document.getElementById("search");
+  if (searchQ && searchEl) {
+    searchEl.focus();
+    searchEl.setSelectionRange(searchQ.length, searchQ.length);
+  }
 }
+
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "search") return;
+  searchQ = e.target.value;
+  renderRegistry();
+});
 window.setStatusFilter = function(t) { statusFilter = t; renderRegistry(); };
 
 // ---- Vehicle modal (register / edit) ----
