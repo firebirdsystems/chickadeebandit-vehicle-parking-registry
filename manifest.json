@@ -85,5 +85,17 @@
     ]
   },
   "nav": { "label": "Parking" },
+  "glance": {
+    "source": {
+      "kind": "sql",
+      "query": "SELECT COUNT(*) AS n FROM app_vehicle_parking_registry__flags f JOIN app_vehicle_parking_registry__vehicles v ON v.id = f.vehicle_id WHERE f.status = 'open' LIMIT 1"
+    },
+    "display": {
+      "template": "badge",
+      "count": "n",
+      "label": "parking flags on your vehicles",
+      "severity": "warn"
+    }
+  },
   "icon": "🚗"
 }
