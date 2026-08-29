@@ -1,6 +1,6 @@
 {
   "name": "chickadee-app-vehicle-parking-registry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vehicle & Parking Registry app for Chickadee Bandit",
   "type": "module",
   "scripts": {
