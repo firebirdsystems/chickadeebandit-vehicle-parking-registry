@@ -21,7 +21,7 @@
     "settings": {"sql": "SELECT key, value FROM app_vehicle_parking_registry__settings WHERE key = 'board_group_id'"},
     "vehicles": {"sql": "SELECT * FROM app_vehicle_parking_registry__vehicles ORDER BY created_at DESC"},
     "parking_spots": {"sql": "SELECT * FROM app_vehicle_parking_registry__parking_spots ORDER BY label ASC"},
-    "flags": {"sql": "SELECT * FROM app_vehicle_parking_registry__flags ORDER BY created_at DESC"}
+    "flags": {"sql": "SELECT * FROM app_vehicle_parking_registry__flags WHERE status = 'open' ORDER BY created_at DESC"}
   },
   "db_plaintext_columns": ["label", "spot_type"],
   "row_policies": {

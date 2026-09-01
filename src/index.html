@@ -289,13 +289,42 @@ async function loadSpots() {
   spots = rows;
 }
 
-async function loadAllFlags() {
+// Only the OPEN flags. This read runs server-side on every launch, and the list
+// it feeds asks one question of it — does this vehicle have an open flag, so
+// does its card show the flagged badge — which resolved flags cannot answer.
+// Every flag ever issued used to be downloaded to answer it. A vehicle's full
+// flag history is a detail-view concern, so it loads there (loadFlags).
+async function loadOpenFlags() {
   if (!DB) {
     flags = [{ id: "f1", vehicle_id: "v2", flagged_by: "m1", reason: "Parked in fire lane for 3+ days.", violation_id: "demo-violation-1", status: "open", created_at: "2026-05-20T09:00:00Z", resolved_at: null }];
+    flagHistoryLoaded.add("v2");
     return;
   }
-  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__flags ORDER BY created_at DESC`);
+  const { rows } = await db(`SELECT * FROM app_vehicle_parking_registry__flags WHERE status = 'open' ORDER BY created_at DESC`);
   flags = rows;
+}
+
+// Per-vehicle history, fetched once per vehicle and merged into `flags`. The
+// cached PROMISE is the guard, not a boolean: a double tap on a card would
+// otherwise start two reads before either finished. Merging dedups by id
+// because that vehicle's open flags are already here from the preload.
+const flagHistoryLoaded = new Set();
+const flagHistoryPromises = new Map();
+function loadFlagHistory(vehicleId) {
+  if (!DB || flagHistoryLoaded.has(vehicleId)) return Promise.resolve();
+  if (!flagHistoryPromises.has(vehicleId)) {
+    flagHistoryPromises.set(
+      vehicleId,
+      db(`SELECT * FROM app_vehicle_parking_registry__flags WHERE vehicle_id = ? ORDER BY created_at DESC`, [vehicleId])
+        .then(({ rows }) => {
+          const seen = new Set(flags.map(f => f.id));
+          flags = [...flags, ...(rows ?? []).filter(f => !seen.has(f.id))];
+          flagHistoryLoaded.add(vehicleId);
+        })
+        .catch((e) => { flagHistoryPromises.delete(vehicleId); throw e; })
+    );
+  }
+  return flagHistoryPromises.get(vehicleId);
 }
 
 function loadFlags(vehicleId) {
@@ -551,7 +580,14 @@ window.deleteVehicle = async function(id) {
 window.openVehicleDetail = async function(id) {
   const v = vehicles.find(x => x.id === id);
   if (!v) return;
+  // Draw immediately from the open flags already in hand, then redraw once this
+  // vehicle's resolved history arrives — the detail is the only place that
+  // shows it, so it is fetched here rather than on every launch.
   renderVehicleDetail(v, loadFlags(id));
+  try {
+    await loadFlagHistory(id);
+    renderVehicleDetail(v, loadFlags(id));
+  } catch { /* the open flags are already on screen; a failed history is not fatal */ }
 };
 
 function renderVehicleDetail(v, flags) {
@@ -910,7 +946,7 @@ function handleDeepLink() {
 // ---- init ----
 (async () => {
   await Promise.all([loadContext(), loadSettings()]);
-  await Promise.all([loadVehicles(), loadSpots(), loadAllFlags()]);
+  await Promise.all([loadVehicles(), loadSpots(), loadOpenFlags()]);
   render();
   handleDeepLink();
 })();
