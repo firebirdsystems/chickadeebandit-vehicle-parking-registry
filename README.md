@@ -1,6 +1,6 @@
 # Vehicle & Parking Registry
 
-A [Chickadee Bandit](http://chickadeebandit.com) app.
+A [Chickadee Bandit](https://chickadeebandit.com/app-library/vehicle-parking-registry) app.
 
 Register household vehicles and parking spots/permits. Leadership manages spot assignments and can flag non-compliant vehicles — flags can cross-post directly into Violation Tracking.
 
