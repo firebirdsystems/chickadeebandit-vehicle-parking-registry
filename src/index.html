@@ -368,11 +368,11 @@ function jsArg(value) {
 }
 
 // ---- modal ----
-function openModal(html) {
+function openModal(html, testid = "modal") {
   closeModal();
   modalEl = document.createElement("div");
   modalEl.className = "modal-backdrop";
-  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.innerHTML = `<div class="modal" data-testid="${testid}">${html}</div>`;
   modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
   document.body.appendChild(modalEl);
 }
@@ -388,13 +388,13 @@ function render() {
     { id: "spots", label: "Parking Spots" },
   ];
   const tabsHtml = tabs.map(t =>
-    `<button class="tab ${view === t.id ? "active" : ""}" onclick="setView('${t.id}')">${esc(t.label)}</button>`
+    `<button class="tab ${view === t.id ? "active" : ""}" data-testid="tab" data-tab-id="${t.id}" onclick="setView('${t.id}')">${esc(t.label)}</button>`
   ).join("");
 
   const addBtn = view === "mine"
     ? `<button class="btn btn-icon" onclick="openVehicleModal()" title="Register Vehicle">＋</button>`
     : view === "spots" && canManageSpots()
-      ? `<button class="btn btn-icon" onclick="openSpotModal()" title="Add Spot">＋</button>`
+      ? `<button class="btn btn-icon" data-testid="add-spot" onclick="openSpotModal()" title="Add Spot">＋</button>`
       : "";
   const settingsBtn = ME?.isAdmin
     ? `<button class="btn btn-ghost btn-sm" onclick="openBoardConfig()">⚙️ Board</button>`
@@ -432,7 +432,7 @@ function vehicleCardHtml(v) {
   const status = vehicleStatus(v);
   const color = vehicleStatusColor(status);
   return `
-    <div class="card ${status === "flagged" ? "flagged" : ""}" onclick="openVehicleDetail(${jsArg(v.id)})">
+    <div class="card ${status === "flagged" ? "flagged" : ""}" data-testid="vehicle-card" data-vehicle-id="${esc(v.id)}" data-vehicle-status="${esc(status)}" onclick="openVehicleDetail(${jsArg(v.id)})">
       <div class="c-top">
         <div class="c-icon">🚗</div>
         <div class="c-body">
@@ -597,25 +597,25 @@ function renderVehicleDetail(v, flags) {
   const flagsHtml = flags.length === 0
     ? `<div style="color:var(--muted);font-size:0.85rem">No flags on record.</div>`
     : flags.map(f => `
-        <div class="flag-row">
+        <div class="flag-row" data-testid="flag-row" data-flag-id="${esc(f.id)}" data-flag-status="${esc(f.status)}">
           <div class="flag-meta">
             ${esc(memberName(f.flagged_by))} · ${esc(fmt(f.created_at))} ·
             <span class="badge ${f.status === "open" ? "" : "badge-outline"}" style="${f.status === "open" ? "background:#ef4444" : ""}">${esc(flagStatusLabel(f.status))}</span>
           </div>
           <div class="flag-reason">${esc(f.reason)}</div>
           ${f.violation_id ? `<button class="link-btn" style="margin-top:4px" onclick="hubOpenViolation(${jsArg(f.violation_id)})">View in Violation Tracking →</button>` : ""}
-          ${canResolveFlag(f) ? `<div style="margin-top:6px"><button class="btn btn-sm btn-green" onclick="submitResolveFlag(${jsArg(v.id)},${jsArg(f.id)})">Mark Resolved</button></div>` : ""}
+          ${canResolveFlag(f) ? `<div style="margin-top:6px"><button class="btn btn-sm btn-green" data-testid="resolve-flag" onclick="submitResolveFlag(${jsArg(v.id)},${jsArg(f.id)})">Mark Resolved</button></div>` : ""}
         </div>`).join("");
 
   const ownerActions = canEditVehicle(v) || canDeleteVehicle() ? `
     <div class="modal-actions" style="justify-content:flex-start;margin-top:8px">
-      ${canEditVehicle(v) ? `<button class="btn btn-sm btn-ghost" onclick="openVehicleModal(${jsArg(v.id)})">Edit</button>` : ""}
-      ${canDeleteVehicle() ? `<button class="btn btn-sm btn-danger" onclick="deleteVehicle(${jsArg(v.id)})">Remove</button>` : ""}
+      ${canEditVehicle(v) ? `<button class="btn btn-sm btn-ghost" data-testid="edit-vehicle" onclick="openVehicleModal(${jsArg(v.id)})">Edit</button>` : ""}
+      ${canDeleteVehicle() ? `<button class="btn btn-sm btn-danger" data-testid="remove-vehicle" onclick="deleteVehicle(${jsArg(v.id)})">Remove</button>` : ""}
     </div>` : "";
 
   const flagAction = canFlagVehicle() ? `
     <div class="section-title">Leadership Actions</div>
-    <button class="btn btn-sm btn-warning" onclick="openFlagModal(${jsArg(v.id)})">🚩 Flag Vehicle</button>` : "";
+    <button class="btn btn-sm btn-warning" data-testid="flag-vehicle" onclick="openFlagModal(${jsArg(v.id)})">🚩 Flag Vehicle</button>` : "";
 
   openModal(`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -637,7 +637,7 @@ function renderVehicleDetail(v, flags) {
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
     </div>
-  `);
+  `, "vehicle-detail-modal");
 }
 
 window.hubOpenViolation = function(violationId) {
@@ -751,7 +751,7 @@ function spotTileHtml(s) {
   const occupied = !spotIsAvailable(s);
   const vehicle = occupied ? vehicles.find(v => v.id === s.assigned_vehicle_id) : null;
   return `
-    <div class="spot-tile ${occupied ? "occupied" : ""}" onclick="openSpotDetail(${jsArg(s.id)})">
+    <div class="spot-tile ${occupied ? "occupied" : ""}" data-testid="spot-tile" data-spot-id="${esc(s.id)}" onclick="openSpotDetail(${jsArg(s.id)})">
       <div class="spot-label">${esc(s.label)}</div>
       <div class="spot-meta">${esc(spotTypeLabel(s.spot_type))}</div>
       <div class="spot-meta">${occupied ? esc(`${vehicleLabel(vehicle ?? {})} · ${memberName(s.assigned_unit_id)}`) : "Unassigned"}</div>
@@ -765,8 +765,8 @@ window.openSpotDetail = function(id) {
 
   const manage = canManageSpots() ? `
     <div class="modal-actions" style="justify-content:flex-start">
-      <button class="btn btn-sm btn-ghost" onclick="openSpotModal(${jsArg(s.id)})">Edit / Reassign</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteSpot(${jsArg(s.id)})">Remove</button>
+      <button class="btn btn-sm btn-ghost" data-testid="edit-spot" onclick="openSpotModal(${jsArg(s.id)})">Edit / Reassign</button>
+      <button class="btn btn-sm btn-danger" data-testid="remove-spot" onclick="deleteSpot(${jsArg(s.id)})">Remove</button>
     </div>` : "";
 
   openModal(`
@@ -777,7 +777,7 @@ window.openSpotDetail = function(id) {
     ${s.notes ? `<div class="detail-field"><div class="detail-label">Notes</div><div class="detail-value">${esc(s.notes)}</div></div>` : ""}
     ${manage}
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
-  `);
+  `, "spot-detail-modal");
 };
 
 window.openSpotModal = function(existingId) {

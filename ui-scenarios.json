@@ -1,0 +1,321 @@
+{
+  "scenarios": [
+    {
+      "name": "leadership controls on my own flagged vehicle follow the CONFIGURED board group, over identical rows",
+      "members": {
+        "owner": "adult",
+        "neighbor": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedGroup",
+          "group": "decoy",
+          "name": "Social Committee",
+          "members": [
+            "neighbor"
+          ]
+        },
+        {
+          "action": "seedGroup",
+          "group": "board",
+          "name": "HOA Board",
+          "members": [
+            "owner"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES ('board_group_id', ?)",
+          "params": [
+            "{{group:decoy}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES ('ui-vehicle', ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+          "params": [
+            "{{owner}}",
+            "Honda",
+            "Civic",
+            "Blue",
+            "7ABC123",
+            "P-104",
+            "Street parking overnight."
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at) VALUES ('ui-flag', 'ui-vehicle', ?, ?, NULL, 'open', datetime('now'))",
+          "params": [
+            "{{neighbor}}",
+            "Parked in the fire lane for three days."
+          ]
+        },
+        {
+          "action": "open",
+          "as": "owner"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-card\"][data-vehicle-id=\"ui-vehicle\"][data-vehicle-status=\"flagged\"]"
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-card\"][data-vehicle-id=\"ui-vehicle\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"flag-row\"][data-flag-id=\"ui-flag\"][data-flag-status=\"open\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"edit-vehicle\"]"
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "Parked in the fire lane for three days.",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"flag-row\"][data-flag-id=\"ui-flag\"][data-flag-status=\"open\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"resolve-flag\"]",
+          "count": 0
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"flag-vehicle\"]",
+          "count": 0
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"remove-vehicle\"]",
+          "count": 0
+        },
+        {
+          "action": "seedRaw",
+          "sql": "UPDATE app_vehicle_parking_registry__settings SET value = ? WHERE key = 'board_group_id'",
+          "params": [
+            "{{group:board}}"
+          ]
+        },
+        {
+          "action": "reload",
+          "as": "owner"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-card\"][data-vehicle-id=\"ui-vehicle\"][data-vehicle-status=\"flagged\"]"
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-card\"][data-vehicle-id=\"ui-vehicle\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"flag-row\"][data-flag-id=\"ui-flag\"][data-flag-status=\"open\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"edit-vehicle\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"resolve-flag\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"flag-vehicle\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"vehicle-detail-modal\"] [data-testid=\"remove-vehicle\"]"
+        }
+      ]
+    },
+    {
+      "name": "the Registry tab and spot management follow the CONFIGURED board group",
+      "members": {
+        "owner": "adult",
+        "neighbor": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedGroup",
+          "group": "decoy",
+          "name": "Social Committee",
+          "members": [
+            "neighbor"
+          ]
+        },
+        {
+          "action": "seedGroup",
+          "group": "board",
+          "name": "HOA Board",
+          "members": [
+            "owner"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES ('board_group_id', ?)",
+          "params": [
+            "{{group:decoy}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at) VALUES ('ui-spot', 'Lot A-12', 'visitor', NULL, NULL, ?, 'everyone', ?, datetime('now'), datetime('now'))",
+          "params": [
+            "{{neighbor}}",
+            "Two-hour limit."
+          ]
+        },
+        {
+          "action": "open",
+          "as": "owner"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"mine\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"registry\"]",
+          "count": 0
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"spots\"]"
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"spots\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-tile\"][data-spot-id=\"ui-spot\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"add-spot\"]",
+          "count": 0
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-tile\"][data-spot-id=\"ui-spot\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-detail-modal\"]"
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "Lot A-12",
+          "selector": "[data-testid=\"spot-detail-modal\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-detail-modal\"] [data-testid=\"edit-spot\"]",
+          "count": 0
+        },
+        {
+          "action": "seedRaw",
+          "sql": "UPDATE app_vehicle_parking_registry__settings SET value = ? WHERE key = 'board_group_id'",
+          "params": [
+            "{{group:board}}"
+          ]
+        },
+        {
+          "action": "reload",
+          "as": "owner"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"mine\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"registry\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"spots\"]"
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"tab\"][data-tab-id=\"spots\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-tile\"][data-spot-id=\"ui-spot\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"add-spot\"]"
+        },
+        {
+          "action": "click",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-tile\"][data-spot-id=\"ui-spot\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-detail-modal\"]"
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "Lot A-12",
+          "selector": "[data-testid=\"spot-detail-modal\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "owner",
+          "selector": "[data-testid=\"spot-detail-modal\"] [data-testid=\"edit-spot\"]"
+        }
+      ]
+    }
+  ]
+}
