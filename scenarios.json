@@ -17,6 +17,233 @@
           "expect": { "status": 403 }
         }
       ]
+    },
+    {
+      "name": "a child's vehicle is stamped as the child, and the child cannot see or edit a parent's vehicle or delete their own",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, license_plate, created_at, updated_at) VALUES (?, ?, ?, 'Civic', ?, '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["veh-parent", "{{parent}}", "Honda", "PARENT1"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, license_plate, created_at, updated_at) VALUES (?, ?, ?, 'Civic', ?, '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["veh-kid", "{{parent}}", "Toyota", "KID1"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, owner_id FROM app_vehicle_parking_registry__vehicles",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "veh-kid", "owner_id": "scn-kid" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_vehicle_parking_registry__vehicles SET license_plate = 'STOLEN' WHERE id = 'veh-parent'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id, license_plate FROM app_vehicle_parking_registry__vehicles WHERE id = 'veh-parent'",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "veh-parent", "license_plate": "PARENT1" }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = 'veh-kid'",
+          "expect": { "status": 403 }
+        }
+      ]
+    },
+    {
+      "name": "a child cannot manage parking spots or flag vehicles",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, created_by, visibility, created_at, updated_at) VALUES ('spot-1', 'A1', ?, 'everyone', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, license_plate, created_at, updated_at) VALUES (?, ?, ?, 'Civic', ?, '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["veh-parent", "{{parent}}", "Honda", "PARENT1"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, label FROM app_vehicle_parking_registry__parking_spots",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "spot-1", "label": "A1" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, created_by, created_at, updated_at) VALUES ('spot-kid', 'K1', ?, '2099-01-02T00:00:00Z', '2099-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_vehicle_parking_registry__parking_spots SET assigned_vehicle_id = 'veh-parent' WHERE id = 'spot-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, created_at) VALUES ('flag-kid', 'veh-parent', ?, 'parked badly', '2099-01-02T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id FROM app_vehicle_parking_registry__flags",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "a board-group member sees every vehicle, flags one and removes it (its flags cascade away), while a plain adult outside the board sees only their own and cannot flag or delete",
+      "members": { "manager": "adult", "resident": "adult", "neighbor": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "board", "name": "Board", "members": ["manager"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES ('board_group_id', ?)",
+          "params": ["{{group:board}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, license_plate, created_at, updated_at) VALUES ('veh-res', ?, 'Honda', 'RES1', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["{{resident}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, license_plate, created_at, updated_at) VALUES ('veh-nb', ?, 'Ford', 'NB1', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["{{neighbor}}"]
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "SELECT id FROM app_vehicle_parking_registry__vehicles",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "veh-res" }] }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "SELECT id FROM app_vehicle_parking_registry__vehicles ORDER BY id",
+          "expect": { "status": 200, "rowCount": 2, "rowsContain": [{ "id": "veh-nb" }, { "id": "veh-res" }] }
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, created_at) VALUES ('flag-res', 'veh-res', ?, 'self-flag', '2099-01-02T00:00:00Z')",
+          "params": ["{{resident}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, created_at) VALUES ('flag-nb', 'veh-nb', ?, 'blocking hydrant', '2099-01-02T00:00:00Z')",
+          "params": ["{{manager}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "SELECT id, vehicle_id, flagged_by FROM app_vehicle_parking_registry__flags",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "flag-nb", "vehicle_id": "veh-nb", "flagged_by": "scn-manager" }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = 'veh-res'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "DELETE FROM app_vehicle_parking_registry__vehicles WHERE id = 'veh-nb'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "SELECT id FROM app_vehicle_parking_registry__vehicles",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "veh-res" }] }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "SELECT id FROM app_vehicle_parking_registry__flags",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "a board-group member manages parking spots; a plain adult outside the board is refused",
+      "members": { "manager": "adult", "resident": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "board", "name": "Board", "members": ["manager"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES ('board_group_id', ?)",
+          "params": ["{{group:board}}"]
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, created_by, visibility, created_at, updated_at) VALUES ('spot-1', 'A1', ?, 'everyone', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["{{manager}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "manager",
+          "sql": "UPDATE app_vehicle_parking_registry__parking_spots SET assigned_unit_id = ? WHERE id = 'spot-1'",
+          "params": ["{{resident}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, created_by, visibility, created_at, updated_at) VALUES ('spot-2', 'B2', ?, 'everyone', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z')",
+          "params": ["{{resident}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "UPDATE app_vehicle_parking_registry__parking_spots SET assigned_unit_id = NULL WHERE id = 'spot-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "resident",
+          "sql": "SELECT id, label, assigned_unit_id FROM app_vehicle_parking_registry__parking_spots",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "spot-1", "label": "A1", "assigned_unit_id": "scn-resident" }]
+          }
+        }
+      ]
     }
   ]
 }
