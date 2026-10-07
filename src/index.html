@@ -103,7 +103,7 @@
       text-align: center; padding: 48px 24px; color: var(--muted);
       font-size: 0.95rem;
     }
-    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-icon { margin-bottom: 12px; }
 
     /* Modal */
     .modal-backdrop {
@@ -176,11 +176,14 @@
 </head>
 <body>
 <div class="app" id="app">
-  <div class="empty"><div class="empty-icon">⏳</div>Loading…</div>
+  <div class="empty"><div class="empty-icon" id="loading-icon"></div>Loading…</div>
 </div>
 
 <script type="module">
-import { hubAlert, esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate, searchMatch } from "/hub-sdk.js";
+import { hubAlert, esc, hubConfirm, hubOpen, crossWrite, formatRelativeDate, searchMatch, glyph, chickadee } from "/hub-sdk.js";
+
+// The loading state is static markup; its mark comes from the SDK.
+document.getElementById("loading-icon").innerHTML = chickadee("perched");
 import {
   isBoard as _isBoard,
   canEditVehicle as _canEditVehicle, canDeleteVehicle as _canDeleteVehicle,
@@ -397,13 +400,13 @@ function render() {
       ? `<button class="btn btn-icon" data-testid="add-spot" onclick="openSpotModal()" title="Add Spot">＋</button>`
       : "";
   const settingsBtn = ME?.isAdmin
-    ? `<button class="btn btn-ghost btn-sm" onclick="openBoardConfig()">⚙️ Board</button>`
+    ? `<button class="btn btn-ghost btn-sm" onclick="openBoardConfig()">${glyph("gear")} Board</button>`
     : "";
 
   document.getElementById("app").innerHTML = `
     <header>
       <div>
-        <div style="font-size:1.2rem;font-weight:700">🚗 Vehicle &amp; Parking Registry</div>
+        <div style="font-size:1.2rem;font-weight:700">${glyph("car")} Vehicle &amp; Parking Registry</div>
         <div class="sub">${boardView ? `${vehicles.length} vehicle${vehicles.length !== 1 ? "s" : ""} registered` : "Manage your household's vehicles and parking"}</div>
       </div>
       <div class="header-actions">${settingsBtn}${addBtn}</div>
@@ -423,7 +426,7 @@ window.setView = function(v) { view = v; statusFilter = "all"; render(); };
 function renderMyVehicles() {
   const mine = vehicles.filter(v => v.owner_id === ME?.id);
   const html = mine.length === 0
-    ? `<div class="empty"><div class="empty-icon">🚗</div>You haven't registered any vehicles yet.</div>`
+    ? `<div class="empty"><div class="empty-icon">${chickadee("nest")}</div>You haven't registered any vehicles yet.</div>`
     : mine.map(vehicleCardHtml).join("");
   document.getElementById("view-body").innerHTML = html;
 }
@@ -434,7 +437,7 @@ function vehicleCardHtml(v) {
   return `
     <div class="card ${status === "flagged" ? "flagged" : ""}" data-testid="vehicle-card" data-vehicle-id="${esc(v.id)}" data-vehicle-status="${esc(status)}" onclick="openVehicleDetail(${jsArg(v.id)})">
       <div class="c-top">
-        <div class="c-icon">🚗</div>
+        <div class="c-icon">${glyph("car")}</div>
         <div class="c-body">
           <div class="c-title">${esc(vehicleLabel(v))} · ${esc(v.license_plate || "No plate on file")}</div>
           <div class="c-meta">${esc(v.color || "")}${v.permit_number ? ` · Permit ${esc(v.permit_number)}` : ""}</div>
@@ -462,8 +465,8 @@ function renderRegistry() {
 
   const cardsHtml = list.length === 0
     ? (searchQ
-      ? `<div class="empty"><div class="empty-icon">🔍</div>No vehicles match "${esc(searchQ)}".</div>`
-      : `<div class="empty"><div class="empty-icon">✅</div>No vehicles found.</div>`)
+      ? `<div class="empty"><div class="empty-icon">${chickadee("searching")}</div>No vehicles match "${esc(searchQ)}".</div>`
+      : `<div class="empty"><div class="empty-icon">${chickadee("sleeping")}</div>No vehicles found.</div>`)
     : list.map(vehicleCardHtml).join("");
 
   document.getElementById("view-body").innerHTML = `
@@ -615,11 +618,11 @@ function renderVehicleDetail(v, flags) {
 
   const flagAction = canFlagVehicle() ? `
     <div class="section-title">Leadership Actions</div>
-    <button class="btn btn-sm btn-warning" data-testid="flag-vehicle" onclick="openFlagModal(${jsArg(v.id)})">🚩 Flag Vehicle</button>` : "";
+    <button class="btn btn-sm btn-warning" data-testid="flag-vehicle" onclick="openFlagModal(${jsArg(v.id)})">${glyph("flag")} Flag Vehicle</button>` : "";
 
   openModal(`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <span style="font-size:1.8rem">🚗</span>
+      <span style="font-size:1.8rem">${glyph("car")}</span>
       <div>
         <div class="modal-title" style="margin-bottom:4px">${esc(vehicleLabel(v))}</div>
         <span class="badge" style="background:${color}">${esc(vehicleStatusLabel(status))}</span>
@@ -742,7 +745,7 @@ window.submitResolveFlag = async function(vehicleId, flagId) {
 // ---- Parking Spots ----
 function renderSpots() {
   const html = spots.length === 0
-    ? `<div class="empty"><div class="empty-icon">🅿️</div>No parking spots have been added yet.</div>`
+    ? `<div class="empty"><div class="empty-icon">${chickadee("nest")}</div>No parking spots have been added yet.</div>`
     : `<div class="spot-grid">${spots.map(spotTileHtml).join("")}</div>`;
   document.getElementById("view-body").innerHTML = html;
 }
@@ -770,7 +773,7 @@ window.openSpotDetail = function(id) {
     </div>` : "";
 
   openModal(`
-    <div class="modal-title">🅿️ ${esc(s.label)}</div>
+    <div class="modal-title">${glyph("parking")} ${esc(s.label)}</div>
     <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${esc(spotTypeLabel(s.spot_type))}</div></div>
     <div class="detail-field"><div class="detail-label">Assigned To</div><div class="detail-value">${s.assigned_unit_id ? esc(memberName(s.assigned_unit_id)) : "—"}</div></div>
     <div class="detail-field"><div class="detail-label">Vehicle</div><div class="detail-value">${vehicle ? esc(`${vehicleLabel(vehicle)} (${vehicle.license_plate})`) : "—"}</div></div>
