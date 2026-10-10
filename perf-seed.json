@@ -1,0 +1,1036 @@
+{
+  "groups": [
+    {
+      "key": "board",
+      "name": "HOA Board",
+      "members": [
+        "{{me}}",
+        "{{partner}}"
+      ]
+    }
+  ],
+  "seed": [
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES (?, ?)",
+      "params": [
+        "board_group_id",
+        "{{group:board}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-170 days','+0 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-160 days','+0 minutes'))",
+      "params": [
+        "perf-veh-01",
+        "{{me}}",
+        "Honda",
+        "Civic",
+        "Blue",
+        "7ABC123",
+        "P-104",
+        "Street parking overnight."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-164 days','+1 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-153 days','+1 minutes'))",
+      "params": [
+        "perf-veh-02",
+        "{{partner}}",
+        "Toyota",
+        "RAV4",
+        "Silver",
+        "8KLM442",
+        "P-107",
+        "Usually in the garage."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-158 days','+2 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-146 days','+2 minutes'))",
+      "params": [
+        "perf-veh-03",
+        "{{adult2}}",
+        "Subaru",
+        "Outback",
+        "Green",
+        "6TRE901",
+        "P-110",
+        "Guest pass on the dash when the in-laws visit."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-152 days','+3 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-139 days','+3 minutes'))",
+      "params": [
+        "perf-veh-04",
+        "{{me}}",
+        "Ford",
+        "F-150",
+        "Black",
+        "5PLK778",
+        "P-113",
+        "Charges at the shared EV bay Tuesdays."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-146 days','+4 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-132 days','+4 minutes'))",
+      "params": [
+        "perf-veh-05",
+        "{{adult2}}",
+        "Tesla",
+        "Model 3",
+        "White",
+        "9EVX210",
+        "P-116",
+        "Work truck, back in by 6pm."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-140 days','+5 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-125 days','+5 minutes'))",
+      "params": [
+        "perf-veh-06",
+        "{{partner}}",
+        "Mazda",
+        "CX-5",
+        "Red",
+        "7HJK356",
+        "P-119"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-134 days','+6 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-118 days','+6 minutes'))",
+      "params": [
+        "perf-veh-07",
+        "{{child}}",
+        "Volkswagen",
+        "Golf",
+        "Grey",
+        "6WQA119",
+        "P-122"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-128 days','+7 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-111 days','+7 minutes'))",
+      "params": [
+        "perf-veh-08",
+        "{{adult2}}",
+        "Chevrolet",
+        "Bolt",
+        "Blue",
+        "8ZXC604",
+        "P-125",
+        "Roof box in summer."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-122 days','+8 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-104 days','+8 minutes'))",
+      "params": [
+        "perf-veh-09",
+        "{{partner}}",
+        "Hyundai",
+        "Tucson",
+        "White",
+        "7MNB832",
+        "P-128",
+        "Street parking overnight."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-116 days','+9 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','+9 minutes'))",
+      "params": [
+        "perf-veh-10",
+        "{{me}}",
+        "Kia",
+        "Soul",
+        "Orange",
+        "5RTY467",
+        "P-131",
+        "Usually in the garage."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-110 days','+10 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-90 days','+10 minutes'))",
+      "params": [
+        "perf-veh-11",
+        "{{child2}}",
+        "Nissan",
+        "Leaf",
+        "Silver",
+        "9GHJ025",
+        "P-134",
+        "Guest pass on the dash when the in-laws visit."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-104 days','+11 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-83 days','+11 minutes'))",
+      "params": [
+        "perf-veh-12",
+        "{{adult2}}",
+        "Jeep",
+        "Wrangler",
+        "Yellow",
+        "6UIO573",
+        "P-137",
+        "Charges at the shared EV bay Tuesdays."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-98 days','+12 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','+12 minutes'))",
+      "params": [
+        "perf-veh-13",
+        "{{partner}}",
+        "BMW",
+        "X3",
+        "Black",
+        "8DFG291",
+        "P-140",
+        "Work truck, back in by 6pm."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-92 days','+13 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-69 days','+13 minutes'))",
+      "params": [
+        "perf-veh-14",
+        "{{adult2}}",
+        "Volvo",
+        "XC60",
+        "Blue",
+        "7VBN648",
+        "P-143"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-86 days','+14 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-62 days','+14 minutes'))",
+      "params": [
+        "perf-veh-15",
+        "{{me}}",
+        "Toyota",
+        "Prius",
+        "Green",
+        "5ASD184",
+        "P-146"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-80 days','+15 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-55 days','+15 minutes'))",
+      "params": [
+        "perf-veh-16",
+        "{{partner}}",
+        "Honda",
+        "Odyssey",
+        "Grey",
+        "9QWE730",
+        "P-149",
+        "Roof box in summer."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-74 days','+16 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-48 days','+16 minutes'))",
+      "params": [
+        "perf-veh-17",
+        "{{adult2}}",
+        "Ford",
+        "Escape",
+        "Red",
+        "6ZAQ395",
+        "P-152",
+        "Street parking overnight."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-68 days','+17 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-41 days','+17 minutes'))",
+      "params": [
+        "perf-veh-18",
+        "{{child}}",
+        "Subaru",
+        "Forester",
+        "White",
+        "8XSW062",
+        "P-155",
+        "Usually in the garage."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-62 days','+18 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-34 days','+18 minutes'))",
+      "params": [
+        "perf-veh-19",
+        "{{adult2}}",
+        "Audi",
+        "A4",
+        "Silver",
+        "7CDE517",
+        "P-158",
+        "Guest pass on the dash when the in-laws visit."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-56 days','+19 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-27 days','+19 minutes'))",
+      "params": [
+        "perf-veh-20",
+        "{{partner}}",
+        "Mini",
+        "Cooper",
+        "Green",
+        "5VFR946",
+        "P-161",
+        "Charges at the shared EV bay Tuesdays."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-50 days','+20 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','+20 minutes'))",
+      "params": [
+        "perf-veh-21",
+        "{{me}}",
+        "Dodge",
+        "Caravan",
+        "Maroon",
+        "9BGT208",
+        "P-164",
+        "Work truck, back in by 6pm."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-44 days','+21 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','+21 minutes'))",
+      "params": [
+        "perf-veh-22",
+        "{{adult2}}",
+        "Lexus",
+        "RX",
+        "Pearl",
+        "6NHY651",
+        "P-167"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-38 days','+22 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','+22 minutes'))",
+      "params": [
+        "perf-veh-23",
+        "{{partner}}",
+        "Honda",
+        "CR-V",
+        "Black",
+        "8MJU374",
+        "P-170"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-32 days','+23 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','+23 minutes'))",
+      "params": [
+        "perf-veh-24",
+        "{{adult2}}",
+        "Yamaha",
+        "MT-07 motorcycle",
+        "Blue",
+        "4KIL829",
+        "P-173",
+        "Roof box in summer."
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+1 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-177 days','+1 minutes'))",
+      "params": [
+        "perf-spot-01",
+        "Lot A-01",
+        "assigned",
+        "{{me}}",
+        "perf-veh-01",
+        "{{me}}",
+        "everyone",
+        "Covered"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+2 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','+2 minutes'))",
+      "params": [
+        "perf-spot-02",
+        "Lot A-02",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-02",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+3 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-171 days','+3 minutes'))",
+      "params": [
+        "perf-spot-03",
+        "Lot A-03",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-03",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+4 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-168 days','+4 minutes'))",
+      "params": [
+        "perf-spot-04",
+        "Lot A-04",
+        "assigned",
+        "{{me}}",
+        "perf-veh-04",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+5 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-165 days','+5 minutes'))",
+      "params": [
+        "perf-spot-05",
+        "Lot A-05",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-05",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+6 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-162 days','+6 minutes'))",
+      "params": [
+        "perf-spot-06",
+        "Lot A-06",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-06",
+        "{{me}}",
+        "everyone",
+        "Covered"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+7 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-159 days','+7 minutes'))",
+      "params": [
+        "perf-spot-07",
+        "Lot A-07",
+        "assigned",
+        "{{child}}",
+        "perf-veh-07",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+8 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-156 days','+8 minutes'))",
+      "params": [
+        "perf-spot-08",
+        "Lot A-08",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-08",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+9 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-153 days','+9 minutes'))",
+      "params": [
+        "perf-spot-09",
+        "Lot A-09",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-09",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+10 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-150 days','+10 minutes'))",
+      "params": [
+        "perf-spot-10",
+        "Lot A-10",
+        "assigned",
+        "{{me}}",
+        "perf-veh-10",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+11 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-147 days','+11 minutes'))",
+      "params": [
+        "perf-spot-11",
+        "Lot A-11",
+        "assigned",
+        "{{child2}}",
+        "perf-veh-11",
+        "{{me}}",
+        "everyone",
+        "Covered"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+12 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-144 days','+12 minutes'))",
+      "params": [
+        "perf-spot-12",
+        "Lot A-12",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-12",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+13 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-141 days','+13 minutes'))",
+      "params": [
+        "perf-spot-13",
+        "Lot A-13",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-13",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+14 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-138 days','+14 minutes'))",
+      "params": [
+        "perf-spot-14",
+        "Lot A-14",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-14",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+15 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-135 days','+15 minutes'))",
+      "params": [
+        "perf-spot-15",
+        "Lot A-15",
+        "assigned",
+        "{{me}}",
+        "perf-veh-15",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+16 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-132 days','+16 minutes'))",
+      "params": [
+        "perf-spot-16",
+        "Lot A-16",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-16",
+        "{{me}}",
+        "everyone",
+        "Covered"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+17 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-129 days','+17 minutes'))",
+      "params": [
+        "perf-spot-17",
+        "Lot A-17",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-17",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+18 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-126 days','+18 minutes'))",
+      "params": [
+        "perf-spot-18",
+        "Lot A-18",
+        "assigned",
+        "{{child}}",
+        "perf-veh-18",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+19 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-123 days','+19 minutes'))",
+      "params": [
+        "perf-spot-19",
+        "Lot A-19",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-19",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+20 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-120 days','+20 minutes'))",
+      "params": [
+        "perf-spot-20",
+        "Lot A-20",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-20",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+21 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-117 days','+21 minutes'))",
+      "params": [
+        "perf-spot-21",
+        "Lot B-01",
+        "assigned",
+        "{{me}}",
+        "perf-veh-21",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+22 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-114 days','+22 minutes'))",
+      "params": [
+        "perf-spot-22",
+        "Lot B-02",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-22",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+23 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-111 days','+23 minutes'))",
+      "params": [
+        "perf-spot-23",
+        "Lot B-03",
+        "assigned",
+        "{{partner}}",
+        "perf-veh-23",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+24 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-108 days','+24 minutes'))",
+      "params": [
+        "perf-spot-24",
+        "Lot B-04",
+        "assigned",
+        "{{adult2}}",
+        "perf-veh-24",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+25 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-105 days','+25 minutes'))",
+      "params": [
+        "perf-spot-25",
+        "Lot B-05",
+        "unassigned",
+        "{{partner}}",
+        "everyone",
+        "Available, ask the board"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+26 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-102 days','+26 minutes'))",
+      "params": [
+        "perf-spot-26",
+        "Lot B-06",
+        "unassigned",
+        "{{partner}}",
+        "everyone",
+        "Available, ask the board"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+27 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-99 days','+27 minutes'))",
+      "params": [
+        "perf-spot-27",
+        "Lot B-07",
+        "unassigned",
+        "{{partner}}",
+        "everyone",
+        "Available, ask the board"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+28 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-96 days','+28 minutes'))",
+      "params": [
+        "perf-spot-28",
+        "Lot B-08",
+        "unassigned",
+        "{{partner}}",
+        "everyone",
+        "Available, ask the board"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+29 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-93 days','+29 minutes'))",
+      "params": [
+        "perf-spot-29",
+        "Visitor 1",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "2-hour limit"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+30 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-90 days','+30 minutes'))",
+      "params": [
+        "perf-spot-30",
+        "Visitor 2",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "2-hour limit"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+31 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-87 days','+31 minutes'))",
+      "params": [
+        "perf-spot-31",
+        "Visitor 3",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "2-hour limit"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+32 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-84 days','+32 minutes'))",
+      "params": [
+        "perf-spot-32",
+        "Visitor 4",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "2-hour limit"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+33 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-81 days','+33 minutes'))",
+      "params": [
+        "perf-spot-33",
+        "Visitor 5",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "2-hour limit"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+34 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-78 days','+34 minutes'))",
+      "params": [
+        "perf-spot-34",
+        "Visitor 6",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "Overnight with a guest pass"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+35 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-75 days','+35 minutes'))",
+      "params": [
+        "perf-spot-35",
+        "Visitor 7",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "Overnight with a guest pass"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+36 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-72 days','+36 minutes'))",
+      "params": [
+        "perf-spot-36",
+        "Visitor 8",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "Overnight with a guest pass"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+37 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-69 days','+37 minutes'))",
+      "params": [
+        "perf-spot-37",
+        "EV Bay 1",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "Charging only, 4 hours max"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, created_by, visibility, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-180 days','+38 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-66 days','+38 minutes'))",
+      "params": [
+        "perf-spot-38",
+        "EV Bay 2",
+        "visitor",
+        "{{me}}",
+        "everyone",
+        "Charging only, 4 hours max"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','+0 minutes'))",
+      "params": [
+        "perf-flag-01",
+        "perf-veh-01",
+        "{{partner}}",
+        "Parked in the fire lane for three days.",
+        "perf-vio-01",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','+1 minutes'))",
+      "params": [
+        "perf-flag-02",
+        "perf-veh-02",
+        "{{me}}",
+        "Permit not displayed.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','+2 minutes'))",
+      "params": [
+        "perf-flag-03",
+        "perf-veh-03",
+        "{{me}}",
+        "Blocking the shared driveway.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days','+3 minutes'))",
+      "params": [
+        "perf-flag-04",
+        "perf-veh-05",
+        "{{partner}}",
+        "Parked across two spots.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','+4 minutes'))",
+      "params": [
+        "perf-flag-05",
+        "perf-veh-07",
+        "{{me}}",
+        "Expired registration tags.",
+        "perf-vio-05",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','+5 minutes'))",
+      "params": [
+        "perf-flag-06",
+        "perf-veh-08",
+        "{{me}}",
+        "In a visitor spot for over a week.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','+6 minutes'))",
+      "params": [
+        "perf-flag-07",
+        "perf-veh-10",
+        "{{partner}}",
+        "Leaking oil onto the pavement.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days','+7 minutes'))",
+      "params": [
+        "perf-flag-08",
+        "perf-veh-12",
+        "{{me}}",
+        "Parked on the lawn strip.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','+8 minutes'))",
+      "params": [
+        "perf-flag-09",
+        "perf-veh-13",
+        "{{me}}",
+        "Trailer attached in an assigned spot.",
+        "perf-vio-09",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','+9 minutes'))",
+      "params": [
+        "perf-flag-10",
+        "perf-veh-16",
+        "{{partner}}",
+        "Alarm going off overnight, twice.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-21 days','+10 minutes'))",
+      "params": [
+        "perf-flag-11",
+        "perf-veh-19",
+        "{{me}}",
+        "Parked in an EV bay without charging.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','+11 minutes'))",
+      "params": [
+        "perf-flag-12",
+        "perf-veh-22",
+        "{{me}}",
+        "Covering the hydrant marker.",
+        "open"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-68 days','+12 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-51 days','+12 minutes'))",
+      "params": [
+        "perf-flag-13",
+        "perf-veh-24",
+        "{{partner}}",
+        "Parked in the fire lane for three days.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-72 days','+13 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-54 days','+13 minutes'))",
+      "params": [
+        "perf-flag-14",
+        "perf-veh-04",
+        "{{me}}",
+        "Permit not displayed.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-76 days','+14 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-57 days','+14 minutes'))",
+      "params": [
+        "perf-flag-15",
+        "perf-veh-06",
+        "{{me}}",
+        "Blocking the shared driveway.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-80 days','+15 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-60 days','+15 minutes'))",
+      "params": [
+        "perf-flag-16",
+        "perf-veh-09",
+        "{{partner}}",
+        "Parked across two spots.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-84 days','+16 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-63 days','+16 minutes'))",
+      "params": [
+        "perf-flag-17",
+        "perf-veh-01",
+        "{{me}}",
+        "Expired registration tags.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-88 days','+17 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-66 days','+17 minutes'))",
+      "params": [
+        "perf-flag-18",
+        "perf-veh-02",
+        "{{me}}",
+        "In a visitor spot for over a week.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-92 days','+18 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-69 days','+18 minutes'))",
+      "params": [
+        "perf-flag-19",
+        "perf-veh-03",
+        "{{partner}}",
+        "Leaking oil onto the pavement.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-96 days','+19 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-72 days','+19 minutes'))",
+      "params": [
+        "perf-flag-20",
+        "perf-veh-05",
+        "{{me}}",
+        "Parked on the lawn strip.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-100 days','+20 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-75 days','+20 minutes'))",
+      "params": [
+        "perf-flag-21",
+        "perf-veh-07",
+        "{{me}}",
+        "Trailer attached in an assigned spot.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-104 days','+21 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-78 days','+21 minutes'))",
+      "params": [
+        "perf-flag-22",
+        "perf-veh-08",
+        "{{partner}}",
+        "Alarm going off overnight, twice.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-108 days','+22 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-81 days','+22 minutes'))",
+      "params": [
+        "perf-flag-23",
+        "perf-veh-10",
+        "{{me}}",
+        "Parked in an EV bay without charging.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-112 days','+23 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-84 days','+23 minutes'))",
+      "params": [
+        "perf-flag-24",
+        "perf-veh-12",
+        "{{me}}",
+        "Covering the hydrant marker.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-116 days','+24 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-87 days','+24 minutes'))",
+      "params": [
+        "perf-flag-25",
+        "perf-veh-13",
+        "{{partner}}",
+        "Parked in the fire lane for three days.",
+        "resolved"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-120 days','+25 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-90 days','+25 minutes'))",
+      "params": [
+        "perf-flag-26",
+        "perf-veh-16",
+        "{{me}}",
+        "Permit not displayed.",
+        "resolved"
+      ]
+    }
+  ]
+}
