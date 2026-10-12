@@ -244,6 +244,19 @@
           }
         }
       ]
+    },
+    {
+      "name": "one board member resolves a flag another board member raised; the vehicle's owner cannot",
+      "members": {"raiser": "adult", "colleague": "adult", "resident": "adult"},
+      "steps": [
+        {"action": "seedGroup", "group": "board", "name": "Board", "members": ["raiser", "colleague"]},
+        {"action": "seedRaw", "sql": "INSERT INTO app_vehicle_parking_registry__settings (key, value) VALUES ('board_group_id', ?)", "params": ["{{group:board}}"]},
+        {"action": "seedRaw", "sql": "INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, license_plate, created_at, updated_at) VALUES ('veh1', ?, 'Honda', 'Civic', 'RES1', ?, ?)", "params": ["{{resident}}", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]},
+        {"action": "db", "as": "raiser", "sql": "INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, created_at) VALUES ('f1', 'veh1', ?, 'Blocking the gate', ?)", "params": ["{{raiser}}", "2026-01-01T00:00:00Z"], "expect": {"status": 200}},
+        {"action": "db", "as": "resident", "sql": "UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = 'f1' RETURNING id", "params": ["2026-01-01T00:00:00Z"], "expect": {"rowCount": 0}},
+        {"action": "db", "as": "colleague", "sql": "UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = 'f1' RETURNING id", "params": ["2026-01-01T00:00:00Z"], "expect": {"status": 200, "rowCount": 1}},
+        {"action": "db", "as": "raiser", "sql": "SELECT status FROM app_vehicle_parking_registry__flags WHERE id = 'f1'", "expect": {"status": 200, "rowCount": 1, "rowsContain": [{"status": "resolved"}]}}
+      ]
     }
   ]
 }

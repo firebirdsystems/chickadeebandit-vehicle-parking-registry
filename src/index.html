@@ -172,6 +172,8 @@
       background: var(--surface, var(--card, #fff)); color: var(--text, inherit);
     }
     .search-input:focus { outline: none; border-color: var(--accent, #6366f1); }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 5px 10px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -209,6 +211,7 @@ let view     = "mine";   // "mine" | "registry" | "spots"
 let searchQ = "";       // in-app search (see logic.js searchableFields)
 let statusFilter = "all";
 let modalEl  = null;
+let loadError = "";      // set when the first load fails
 
 let memberMap = new Map();
 
@@ -228,9 +231,9 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || body.error) {
-    throw new Error(body.error ?? `Database request failed (${res.status})`);
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || typeof body !== "object" || body.error) {
+    throw new Error(body?.error ?? `Database request failed (${res.status})`);
   }
   return body;
 }
@@ -248,12 +251,14 @@ async function loadContext() {
     memberMap = new Map(members.map(m => [m.id, m]));
     return;
   }
-  try {
-    const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
-    const data = await res.json();
-    members = data["family.members"] ?? [];
-    groups  = data["family.groups"]  ?? [];
-  } catch { members = []; groups = []; }
+  // A failed read throws: firstLoad shows the load banner rather than an empty roster.
+  const res  = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || typeof data !== "object" || data.error) throw new Error("Couldn’t reach the hub. Try again.");
+  // The hub answers 200 and names a key it could not resolve in $errors: that read failed too.
+  if (Array.isArray(data.$errors) && (data.$errors.includes("family.members") || data.$errors.includes("family.groups"))) throw new Error("Couldn’t reach the hub. Try again.");
+  members = data["family.members"] ?? [];
+  groups  = data["family.groups"]  ?? [];
   memberMap = new Map(members.map(m => [m.id, m]));
 }
 
@@ -409,12 +414,18 @@ function render() {
         <div style="font-size:1.2rem;font-weight:700">${glyph("car")} Vehicle &amp; Parking Registry</div>
         <div class="sub">${boardView ? `${vehicles.length} vehicle${vehicles.length !== 1 ? "s" : ""} registered` : "Manage your household's vehicles and parking"}</div>
       </div>
-      <div class="header-actions">${settingsBtn}${addBtn}</div>
+      <div class="header-actions">${loadError ? "" : settingsBtn + addBtn}</div>
     </header>
     <div class="tabs">${tabsHtml}</div>
     <div id="view-body"></div>
   `;
 
+  // A failed first load shows why instead of an empty registry.
+  if (loadError) {
+    document.getElementById("view-body").innerHTML = `<div class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load the registry.</span>
+      <button type="button" class="load-error-retry" data-testid="load-retry" onclick="retryLoad()">Try again</button></div>`;
+    return;
+  }
   if (view === "mine") renderMyVehicles();
   else if (view === "registry") renderRegistry();
   else renderSpots();
@@ -722,7 +733,7 @@ window.submitFlag = async function(vehicleId) {
     }
     render();
     if (btn) { btn.disabled = false; btn.textContent = "Flag & Issue Violation"; }
-    throw e;
+    hubAlert(e?.message ?? "Unable to flag vehicle");
   }
 };
 
@@ -731,14 +742,26 @@ window.submitResolveFlag = async function(vehicleId, flagId) {
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
   try {
     const now = new Date().toISOString();
-    await db(`UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
+    const { changed } = await db(`UPDATE app_vehicle_parking_registry__flags SET status = 'resolved', resolved_at = ? WHERE id = ?`, [now, flagId]);
+    // Nothing changed: the flag is gone, or the hub does not let this member
+    // write it. Show this vehicle's flags as the hub holds them.
+    if (DB && changed === 0) {
+      flagHistoryLoaded.delete(vehicleId);
+      flagHistoryPromises.delete(vehicleId);
+      flags = flags.filter(flag => flag.vehicle_id !== vehicleId);
+      await loadFlagHistory(vehicleId).catch(() => {});
+      openVehicleDetail(vehicleId);
+      render();
+      hubAlert("That flag could not be resolved. It may be gone, or it is not yours to resolve.");
+      return;
+    }
     const idx = flags.findIndex(flag => flag.id === flagId);
     if (idx !== -1) flags[idx] = { ...flags[idx], status: "resolved", resolved_at: now };
     openVehicleDetail(vehicleId);
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Mark Resolved"; }
-    throw e;
+    hubAlert(e?.message ?? "Unable to resolve flag");
   }
 };
 
@@ -947,12 +970,19 @@ function handleDeepLink() {
 }
 
 // ---- init ----
-(async () => {
-  await Promise.all([loadContext(), loadSettings()]);
-  await Promise.all([loadVehicles(), loadSpots(), loadOpenFlags()]);
+async function firstLoad() {
+  try {
+    await Promise.all([loadContext(), loadSettings()]);
+    await Promise.all([loadVehicles(), loadSpots(), loadOpenFlags()]);
+    loadError = "";
+  } catch (e) {
+    loadError = e.message || "failed";
+  }
   render();
-  handleDeepLink();
-})();
+  if (!loadError) handleDeepLink();
+}
+window.retryLoad = firstLoad;
+firstLoad();
 </script>
 </body>
 </html>
