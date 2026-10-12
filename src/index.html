@@ -532,45 +532,35 @@ window.submitVehicle = async function(existingId) {
   if (!plate) { document.getElementById("f-plate").focus(); return; }
 
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn?.disabled) return;
   if (btn) { btn.disabled = true; btn.textContent = existingId ? "Saving…" : "Registering…"; }
 
-  let previousVehicle = null;
-  let createdId = null;
+  // The form stays open until the hub has the vehicle: nothing is drawn for a
+  // save that fails, and what was typed is left in place to send again.
   try {
     const now = new Date().toISOString();
     if (existingId) {
-      const idx = vehicles.findIndex(x => x.id === existingId);
-      if (idx !== -1) {
-        previousVehicle = vehicles[idx];
-        vehicles[idx] = { ...vehicles[idx], make, model, color, license_plate: plate, permit_number: permit, notes, updated_at: now };
-      }
-      closeModal();
-      render();
       await db(
         `UPDATE app_vehicle_parking_registry__vehicles SET make = ?, model = ?, color = ?, license_plate = ?, permit_number = ?, notes = ?, updated_at = ? WHERE id = ?`,
         [make, model, color, plate, permit, notes, now, existingId]
       );
+      const idx = vehicles.findIndex(x => x.id === existingId);
+      if (idx !== -1) vehicles[idx] = { ...vehicles[idx], make, model, color, license_plate: plate, permit_number: permit, notes, updated_at: now };
     } else {
       const id = crypto.randomUUID();
-      createdId = id;
-      vehicles.unshift({ id, owner_id: ME?.id ?? "system", make, model, color, license_plate: plate, permit_number: permit, notes, created_at: now, updated_at: now });
-      closeModal();
-      render();
       await db(
         `INSERT INTO app_vehicle_parking_registry__vehicles (id, owner_id, make, model, color, license_plate, permit_number, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [id, ME?.id ?? "system", make, model, color, plate, permit, notes, now, now]
       );
+      vehicles.unshift({ id, owner_id: ME?.id ?? "system", make, model, color, license_plate: plate, permit_number: permit, notes, created_at: now, updated_at: now });
     }
-  } catch (e) {
-    if (previousVehicle) {
-      const idx = vehicles.findIndex(x => x.id === previousVehicle.id);
-      if (idx !== -1) vehicles[idx] = previousVehicle;
-    }
-    if (createdId) vehicles = vehicles.filter(x => x.id !== createdId);
+    closeModal();
     render();
+  } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Register"; }
-    hubAlert(e?.message ?? "Unable to save vehicle");
+    console.error(e);
+    hubAlert("Couldn’t save the vehicle — try again.");
   }
 };
 
@@ -586,7 +576,8 @@ window.deleteVehicle = async function(id) {
   } catch (error) {
     vehicles = previousVehicles;
     render();
-    hubAlert(error?.message ?? "Unable to remove vehicle");
+    console.error(error);
+    hubAlert("Couldn’t remove the vehicle — try again.");
   }
 };
 
@@ -690,6 +681,7 @@ window.submitFlag = async function(vehicleId) {
   if (!v) return;
 
   const btn = modalEl?.querySelector(".modal-actions .btn-warning");
+  if (btn?.disabled) return;
   if (btn) { btn.disabled = true; btn.textContent = "Flagging…"; }
 
   let createdFlagId = null;
@@ -698,13 +690,6 @@ window.submitFlag = async function(vehicleId) {
     const flagId = crypto.randomUUID();
     createdFlagId = flagId;
     const violationId = crypto.randomUUID(); // generated here so both apps reference the same id
-
-    flags = [{
-      id: flagId, vehicle_id: vehicleId, flagged_by: ME?.id ?? "system",
-      reason, violation_id: violationId, status: "open", created_at: now, resolved_at: null,
-    }, ...flags];
-    closeModal();
-    render();
 
     await db(
       `INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
@@ -725,15 +710,24 @@ window.submitFlag = async function(vehicleId) {
       },
     }]);
 
+    // Drawn, and the form closed, only once both the flag and its violation
+    // are with the hub; until then the form stays open as typed.
+    flags = [{
+      id: flagId, vehicle_id: vehicleId, flagged_by: ME?.id ?? "system",
+      reason, violation_id: violationId, status: "open", created_at: now, resolved_at: null,
+    }, ...flags];
+    closeModal();
+    render();
+
     notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`, flagAudience(v.owner_id)).catch(() => {});
   } catch (e) {
-    flags = flags.filter(flag => flag.id !== createdFlagId);
     if (createdFlagId) {
       await db(`DELETE FROM app_vehicle_parking_registry__flags WHERE id = ?`, [createdFlagId]).catch(() => {});
     }
-    render();
     if (btn) { btn.disabled = false; btn.textContent = "Flag & Issue Violation"; }
-    hubAlert(e?.message ?? "Unable to flag vehicle");
+    console.error(e);
+    // A shape refusal from Violation Tracking names the field at fault; say it.
+    hubAlert(e?.code === "EXPORT_SCHEMA_VIOLATION" ? e.message : "Couldn’t flag the vehicle — try again.");
   }
 };
 
@@ -761,7 +755,8 @@ window.submitResolveFlag = async function(vehicleId, flagId) {
     render();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = "Mark Resolved"; }
-    hubAlert(e?.message ?? "Unable to resolve flag");
+    console.error(e);
+    hubAlert("Couldn’t resolve the flag — try again.");
   }
 };
 
@@ -852,46 +847,35 @@ window.submitSpot = async function(existingId) {
   if (!label) { document.getElementById("f-label").focus(); return; }
 
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn?.disabled) return;
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
 
-  let previousSpot = null;
-  let createdId = null;
+  // As in submitVehicle: drawn, and the form closed, only once the hub has it.
   try {
     const now = new Date().toISOString();
     if (existingId) {
-      const idx = spots.findIndex(x => x.id === existingId);
-      if (idx !== -1) {
-        previousSpot = spots[idx];
-        spots[idx] = { ...spots[idx], label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, updated_at: now };
-      }
-      closeModal();
-      render();
       await db(
         `UPDATE app_vehicle_parking_registry__parking_spots SET label = ?, spot_type = ?, assigned_unit_id = ?, assigned_vehicle_id = ?, notes = ?, updated_at = ? WHERE id = ?`,
         [label, type, unitId, vehicleId, notes, now, existingId]
       );
+      const idx = spots.findIndex(x => x.id === existingId);
+      if (idx !== -1) spots[idx] = { ...spots[idx], label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, notes, updated_at: now };
     } else {
       const id = crypto.randomUUID();
-      createdId = id;
-      spots.push({ id, label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, created_by: ME?.id, visibility: "everyone", notes, created_at: now, updated_at: now });
-      spots.sort((a, b) => a.label.localeCompare(b.label));
-      closeModal();
-      render();
       await db(
         `INSERT INTO app_vehicle_parking_registry__parking_spots (id, label, spot_type, assigned_unit_id, assigned_vehicle_id, created_by, visibility, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 'everyone', ?, ?, ?)`,
         [id, label, type, unitId, vehicleId, ME?.id, notes, now, now]
       );
+      spots.push({ id, label, spot_type: type, assigned_unit_id: unitId, assigned_vehicle_id: vehicleId, created_by: ME?.id, visibility: "everyone", notes, created_at: now, updated_at: now });
+      spots.sort((a, b) => a.label.localeCompare(b.label));
     }
-  } catch (e) {
-    if (previousSpot) {
-      const idx = spots.findIndex(x => x.id === previousSpot.id);
-      if (idx !== -1) spots[idx] = previousSpot;
-    }
-    if (createdId) spots = spots.filter(x => x.id !== createdId);
+    closeModal();
     render();
+  } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = existingId ? "Save" : "Add Spot"; }
-    hubAlert(e?.message ?? "Unable to save parking spot");
+    console.error(e);
+    hubAlert("Couldn’t save the parking spot — try again.");
   }
 };
 
@@ -907,7 +891,8 @@ window.deleteSpot = async function(id) {
   } catch (error) {
     spots = previousSpots;
     render();
-    hubAlert(error?.message ?? "Unable to remove parking spot");
+    console.error(error);
+    hubAlert("Couldn’t remove the parking spot — try again.");
   }
 };
 
@@ -956,7 +941,8 @@ window.saveBoardConfig = async function() {
     render();
   } catch (error) {
     if (btn) { btn.disabled = false; btn.textContent = "Save"; }
-    hubAlert(error?.message ?? "Save failed");
+    console.error(error);
+    hubAlert("Couldn’t save the board group — try again.");
   }
 };
 
