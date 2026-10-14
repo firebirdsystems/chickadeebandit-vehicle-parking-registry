@@ -193,6 +193,7 @@ import {
   canManageSpots as _canManageSpots,
   vehicleStatusLabel, vehicleStatusColor, flagStatusLabel, spotTypeLabel,
   spotIsAvailable, buildViolationDescription, searchableFields,
+  outcomeUnknown, storedDiffers, SAVED_AS_FIRST,
 } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL    ?? "";
@@ -233,7 +234,7 @@ async function db(sql, params = []) {
   });
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || typeof body !== "object" || body.error) {
-    throw new Error(body?.error ?? `Database request failed (${res.status})`);
+    throw Object.assign(new Error(body?.error ?? `Database request failed (${res.status})`), { status: res.status, code: body?.code });
   }
   return body;
 }
@@ -684,50 +685,98 @@ window.submitFlag = async function(vehicleId) {
   if (btn?.disabled) return;
   if (btn) { btn.disabled = true; btn.textContent = "Flagging…"; }
 
+  // Both ids are the open form's, minted on its first press and sent on every
+  // retry: a try whose answer was lost may have stored the flag, or posted its
+  // violation, and a second press must find the flag and post the SAME
+  // violation id (Violation Tracking keeps the first of an id) rather than
+  // issue a second notice.
+  const host = modalEl;
+  const pins = host?.dataset ?? {};
+  const flagId = (pins.flagId ||= crypto.randomUUID());
+  const violationId = (pins.violationId ||= crypto.randomUUID()); // both apps reference the same id
   let createdFlagId = null;
   try {
-    const now = new Date().toISOString();
-    const flagId = crypto.randomUUID();
-    createdFlagId = flagId;
-    const violationId = crypto.randomUUID(); // generated here so both apps reference the same id
+    let now = new Date().toISOString();
+    let flagReason = reason;
+    let note = "";
 
-    await db(
-      `INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'open', ?)`,
-      [flagId, vehicleId, ME?.id ?? "system", reason, violationId, now]
-    );
+    try {
+      await db(
+        `INSERT INTO app_vehicle_parking_registry__flags (id, vehicle_id, flagged_by, reason, violation_id, status, created_at)
+         VALUES (?, ?, ?, ?, ?, 'open', ?)`,
+        [flagId, vehicleId, ME?.id ?? "system", reason, violationId, now]
+      );
+    } catch (e) {
+      // Unknown outcome: read the flag back by the pinned id. Found means an
+      // earlier try stored it; the violation is posted for it below, as stored.
+      // Not found, or the read failed: the flag fails, the ids stay pinned.
+      if (!DB || !outcomeUnknown(e)) throw e;
+      let stored = null;
+      try { stored = (await db(`SELECT reason, created_at FROM app_vehicle_parking_registry__flags WHERE id = ?`, [flagId])).rows?.[0] ?? null; }
+      catch (readErr) {
+        // The id is ours: with the read-back failed, a UNIQUE answer may be this
+        // form's own first try, so nothing is known — "try again", not "already exists".
+        console.error(readErr);
+        throw new Error("create outcome unknown", { cause: e });
+      }
+      if (!stored) throw e;
+      console.error(e);
+      // Edited since that first try: what was stored is kept, and said so.
+      if (storedDiffers(stored, { reason })) note = SAVED_AS_FIRST;
+      flagReason = stored.reason;
+      now = stored.created_at;
+    }
+    createdFlagId = flagId;
 
     // Cross-post to Violation Tracking's inbox — it drains this on its next load
-    await crossWrite("violation-tracking", "pending_violations", [{
-      op: "array_append", path: "items",
-      value: {
-        id: violationId,
-        unit_id: v.owner_id,
-        issued_by: ME?.id ?? "system",
-        category: "parking",
-        description: buildViolationDescription(v, reason),
-        cure_deadline: deadline,
-      },
-    }]);
+    try {
+      await crossWrite("violation-tracking", "pending_violations", [{
+        op: "array_append", path: "items",
+        value: {
+          id: violationId,
+          unit_id: v.owner_id,
+          issued_by: ME?.id ?? "system",
+          category: "parking",
+          description: buildViolationDescription(v, flagReason),
+          cure_deadline: deadline,
+        },
+      }]);
+    } catch (e) {
+      // With no clear answer the violation may be posted, naming this flag:
+      // the flag stays, and the next press posts the same violation id again.
+      // A refusal after such a try cannot say that earlier post missed, so
+      // the flag stays then too.
+      // Violation Tracking's schema refusal is a 400 too, but a known one.
+      if (outcomeUnknown(e) && e?.code !== "EXPORT_SCHEMA_VIOLATION") pins.violationMaybePosted = "1";
+      if (pins.violationMaybePosted) createdFlagId = null;
+      throw e;
+    }
 
     // Drawn, and the form closed, only once both the flag and its violation
     // are with the hub; until then the form stays open as typed.
+    delete pins.flagId; delete pins.violationId; delete pins.violationMaybePosted;
     flags = [{
       id: flagId, vehicle_id: vehicleId, flagged_by: ME?.id ?? "system",
-      reason, violation_id: violationId, status: "open", created_at: now, resolved_at: null,
-    }, ...flags];
-    closeModal();
+      reason: flagReason, violation_id: violationId, status: "open", created_at: now, resolved_at: null,
+    }, ...flags.filter(f => f.id !== flagId)];
+    // Only the form that flagged is closed: another may have opened meanwhile.
+    if (modalEl === host) closeModal();
     render();
+    if (note) hubAlert(note);
 
-    notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${reason}`, flagAudience(v.owner_id)).catch(() => {});
+    notify("Vehicle Flagged", `${vehicleLabel(v)} (${v.license_plate}) was flagged: ${flagReason}`, flagAudience(v.owner_id)).catch(() => {});
   } catch (e) {
+    // Refused by Violation Tracking: no violation names the flag, so it goes.
     if (createdFlagId) {
       await db(`DELETE FROM app_vehicle_parking_registry__flags WHERE id = ?`, [createdFlagId]).catch(() => {});
     }
     if (btn) { btn.disabled = false; btn.textContent = "Flag & Issue Violation"; }
     console.error(e);
-    // A shape refusal from Violation Tracking names the field at fault; say it.
-    hubAlert(e?.code === "EXPORT_SCHEMA_VIOLATION" ? e.message : "Couldn’t flag the vehicle — try again.");
+    // A shape refusal from Violation Tracking: said in this app's words (the
+    // hub's text, which names the field at fault, stays in the console).
+    hubAlert(e?.code === "EXPORT_SCHEMA_VIOLATION"
+      ? "Violation Tracking didn’t accept this notice — check that app is set up."
+      : "Couldn’t flag the vehicle — try again.");
   }
 };
 
